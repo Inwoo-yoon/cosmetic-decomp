@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>화장품 제형 분해도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 레이아웃: 위쪽 제형 스펙트럼(제품 탭) → 왼쪽 무대(3D 상 분해 / 제조 공정) + 오른쪽 처방 패널. 좁은 화면은 위아래로 쌓음 */
+  --bg:#101316;
+  --panel:#171b1f;
+  --line:#2a3037;
+  --ink:#e4e8ec;
+  --muted:#8b959f;
+  --accent:#5fd1c1;
+  --warm:#f0b44c;
+  --f-display:"IBM Plex Sans KR", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans KR", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;overflow:hidden}
+.app{display:grid;grid-template-rows:auto minmax(0,1fr);height:100%}
+header{border-bottom:1px solid var(--line);padding:10px 16px 0;display:flex;flex-direction:column;gap:8px;background:#121619}
+.titlebar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.titlebar h1{font:700 18px/1.2 var(--f-display);margin:0;text-wrap:balance}
+.titlebar p{margin:0;color:var(--muted);font-size:12px}
+.spectrum{display:flex;gap:2px;overflow-x:auto;padding-bottom:0}
+.spectrum button{flex:1 0 auto;min-width:104px;text-align:left;background:transparent;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:6px 10px 8px;cursor:pointer;font-family:var(--f-body)}
+.spectrum button b{display:block;font:700 14px/1.2 var(--f-display);color:var(--ink)}
+.spectrum button span{font-size:11px}
+.spectrum button:hover{background:#1a1f24}
+.spectrum button.on{border-bottom-color:var(--accent);background:#162024}
+.spectrum button.on b{color:#fff}
+.spec-axis{display:flex;justify-content:space-between;font:500 10px var(--f-mono);color:#5d6872;letter-spacing:.04em;padding:0 10px}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr) 430px;min-height:0}
+.stage{position:relative;min-height:0;overflow:hidden;background:radial-gradient(110% 90% at 35% 30%,#1a2026 0%,var(--bg) 70%)}
+.modebar{position:absolute;left:14px;top:12px;z-index:5;display:flex;gap:6px;align-items:center}
+.seg{display:flex;border:1px solid #34404a;border-radius:5px;overflow:hidden}
+.seg button{background:#1b2126;color:var(--muted);border:0;padding:8px 12px;font:500 13px var(--f-body);cursor:pointer}
+.seg button.on{background:var(--accent);color:#06201c;font-weight:700}
+.stagehint{color:var(--muted);font-size:12px;margin-left:6px}
+#v3d{position:absolute;inset:0}
+#c3d{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c3d.hov{cursor:pointer}
+.labels{position:absolute;inset:0;pointer-events:none}
+.plabel{position:absolute;transform:translate(-50%,0);font:500 12px/1.25 var(--f-body);white-space:nowrap;pointer-events:auto;cursor:pointer;background:rgba(16,19,22,.82);border:1px solid var(--line);border-left:3px solid;padding:3px 7px;border-radius:3px}
+.plabel small{font-family:var(--f-mono);color:var(--muted);margin-left:6px}
+.prodlabel{position:absolute;transform:translate(-50%,0);font:500 12px var(--f-body);color:var(--muted);white-space:nowrap}
+.tip{position:absolute;pointer-events:none;font:500 12px/1.35 var(--f-body);background:#0a0c0e;border:1px solid var(--line);padding:5px 8px;border-radius:3px;display:none;max-width:280px;z-index:6}
+.tip b{font-family:var(--f-mono);color:var(--accent);font-weight:500}
+.formlegend{position:absolute;right:12px;top:12px;z-index:4;background:rgba(16,19,22,.86);border:1px solid var(--line);border-radius:6px;padding:7px 9px;display:flex;flex-direction:column;gap:1px;max-width:170px;font-size:11.5px}
+.formlegend .lgh{color:var(--muted);font-size:11px;margin-bottom:2px}
+.lgi{display:grid;grid-template-columns:12px auto;column-gap:7px;align-items:baseline;cursor:default;padding:2px 3px;border-radius:3px}
+.lgi:hover,.lgi:focus{background:#1f272d;outline:none}
+.lgi b{font-weight:500}
+.lgi span:last-child{grid-column:2;color:var(--muted);font-size:10.5px;line-height:1.3}
+.lgs{width:10px;height:10px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.3)}
+.explodebar{position:absolute;left:14px;right:14px;bottom:12px;display:flex;align-items:center;gap:10px;background:rgba(16,19,22,.84);border:1px solid var(--line);border-radius:5px;padding:8px 12px;font-size:12px;color:var(--muted);z-index:4}
+.explodebar input{flex:1;accent-color:var(--accent)}
+.explodebar .k{font-family:var(--f-mono)}
+
+#vproc{position:absolute;inset:0;display:none;flex-direction:column;padding:56px 14px 12px;gap:10px}
+.proc-top{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,36%);gap:12px}
+.vesselbox,.microbox{position:relative;border:1px solid var(--line);border-radius:6px;background:#12171b;min-height:0;overflow:hidden}
+.boxlabel{position:absolute;left:10px;top:8px;font:700 11px var(--f-display);color:var(--muted);letter-spacing:.06em;z-index:2}
+#cv,#cm{display:block;width:100%;height:100%}
+.micro-note{position:absolute;left:10px;right:10px;bottom:8px;font-size:11px;color:var(--muted);text-align:center}
+.rpmctl{position:absolute;left:10px;bottom:8px;display:none;gap:4px;z-index:3;flex-wrap:wrap;align-items:center}
+.rpmctl::before{content:"균질 속도";font:500 11px var(--f-body);color:var(--muted);margin-right:4px}
+.rpmctl button{font:500 11px var(--f-mono);background:#1d242a;border:1px solid #384550;color:var(--ink);padding:4px 6px;border-radius:3px;cursor:pointer}
+.rpmctl button.on{border-color:var(--accent);color:var(--accent)}
+.stepcard{border:1px solid var(--line);border-radius:6px;background:#141a1e;padding:10px 12px;display:flex;flex-direction:column;gap:6px;max-height:42%;overflow-y:auto}
+.stepnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.stepnav .dots{display:flex;gap:4px;flex-wrap:wrap}
+.dot{min-width:26px;height:26px;border-radius:13px;border:1px solid #3a4651;background:#1a2025;color:var(--muted);font:500 12px var(--f-mono);cursor:pointer;padding:0 6px}
+.dot.on{background:var(--accent);color:#06201c;border-color:var(--accent);font-weight:700}
+.dot.done{color:var(--ink);border-color:#56707a}
+.steptitle{font:700 16px/1.3 var(--f-display);margin:0}
+.cond{display:flex;gap:6px;flex-wrap:wrap}
+.cond span{font:500 12px var(--f-mono);background:#1d252b;border:1px solid #2f3a43;border-radius:3px;padding:2px 7px;font-variant-numeric:tabular-nums}
+.stepcard p{margin:0;max-width:75ch}
+.why{color:#c9d3da;border-left:2px solid var(--accent);padding-left:9px;font-size:13px}
+
+button.btn{font:500 13px/1 var(--f-body);color:var(--ink);background:#20272d;border:1px solid #36424c;padding:7px 11px;border-radius:4px;cursor:pointer}
+button.btn:hover{background:#28313a}
+button.btn.primary{background:var(--accent);border-color:var(--accent);color:#06201c;font-weight:700}
+button:focus-visible,input:focus-visible,.plabel:focus-visible,tr:focus-visible{outline:2px solid var(--warm);outline-offset:2px}
+
+.panel{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;min-height:0}
+.sec{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
+.sec h2{font:700 12px/1 var(--f-display);margin:0;color:var(--muted);letter-spacing:.06em}
+.ph{font:700 22px/1.2 var(--f-display);margin:0}
+.ph small{font:400 12px var(--f-mono);color:var(--muted);margin-left:8px}
+.structchip{display:inline-block;font:500 12px var(--f-body);color:#06201c;background:var(--accent);border-radius:3px;padding:2px 8px;align-self:flex-start}
+.panel p{margin:0;max-width:65ch}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+td,th{padding:5px 4px;border-top:1px solid var(--line);vertical-align:top;text-align:left}
+th{font-weight:500;color:var(--muted);font-size:11px}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.kv td:first-child{color:var(--muted);width:30%}
+tr.phrow td{background:#1b2125;font-weight:700;font-size:12px;border-top:1px solid #36414b}
+tr.phrow .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:0}
+tr.ing{cursor:pointer}
+tr.ing:hover td{background:#1c2328}
+tr.ing.sel td{background:#173033}
+.inci{font-size:12.5px}
+.ko{display:block;color:var(--muted);font-size:11px}
+.fn{color:#c1cbd2;font-size:12px}
+.chip{display:inline-block;font:500 10px/1 var(--f-mono);padding:3px 5px;border-radius:2px;margin-left:5px;vertical-align:1px;border:1px solid;text-decoration:none;white-space:nowrap}
+a.chip:hover{filter:brightness(1.3)}
+.chip.src{color:#9fd3a8;border-color:#3d6b45}
+.chip.reg{color:#f2a3a3;border-color:#7a3e3e}
+.chip.lit{color:#8fc3ef;border-color:#3c5870}
+.chip.qa{color:#e3c27a;border-color:#6d5a30}
+.chip.typ{color:#b9a3d6;border-color:#55476b}
+.chip.calc{color:#7fe0d3;border-color:#2f6a62}
+.chip.pat{color:#c9b4f0;border-color:#5a4a80}
+.mkt li{font-size:12.5px}
+.mkt .gel{color:var(--accent);font-weight:700}
+.selcard{background:#13282a;border:1px solid #2c5a57;border-radius:5px;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
+.selcard h3{margin:0;font:700 15px/1.3 var(--f-display)}
+.selcard .pct{font:500 20px var(--f-mono);color:var(--accent)}
+.empty{color:var(--muted);font-size:13px}
+ul.pts{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+ol.steps li{cursor:pointer}
+ol.steps li:hover{color:#fff}
+.src a{color:#8fc3ef;font-size:12px;word-break:break-all}
+.src ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.legend{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:11.5px;color:var(--muted)}
+.legend .chip{margin-left:0;margin-right:3px}
+.note{font-size:12px;color:var(--muted)}
+.err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px}
+.chip.doc{color:#9fd3a8;border-color:#3d6b45;background:#13221a}
+.chip.inci{color:#8fc3ef;border-color:#3c5870;background:#121c26}
+.chip.est{color:#f0b44c;border-color:#7a5a24;background:#241c0f}
+.tabsep{flex:0 0 1px;background:var(--line);margin:8px 6px}
+.spectrum button.custom b::before{content:"● ";color:var(--warm);font-size:10px}
+.spectrum button.addtab{border:1px dashed #4a5a66;border-bottom:3px solid transparent;border-radius:4px 4px 0 0;margin-left:4px}
+.spectrum button.addtab b{color:var(--accent)}
+.aibox{background:#1d1a12;border:1px solid #5a4a26;border-radius:5px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.aibox b{color:var(--warm)}
+.aibox ul{margin:0;padding-left:18px}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.quote{font-size:12.5px;background:#13221a;border-left:2px solid #3d6b45;padding:6px 9px;color:#cfe3d3}
+.quote span{color:var(--muted);font-size:11px}
+.modal{position:fixed;inset:0;background:rgba(5,7,9,.72);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal[hidden]{display:none}
+#inpageBox[hidden],.fld[hidden]{display:none!important}
+.mbox{background:var(--panel);border:1px solid #34404a;border-radius:8px;width:min(1100px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden}
+.mhead{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.mhead h2{margin:0;font:700 17px var(--f-display)}
+.mbody{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:0;overflow:hidden;min-height:0}
+.mform{padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;border-right:1px solid var(--line)}
+.mside{padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.mside h3,.mform h3{margin:0;font:700 13px var(--f-display);color:var(--muted)}
+.mside ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.fld input[type=text],.fld input[type=url],.fld select,.fld textarea{font:400 13px var(--f-body);color:var(--ink);background:#12171b;border:1px solid #34404a;border-radius:4px;padding:7px 9px}
+.fld textarea{resize:vertical;font-family:var(--f-mono);font-size:12px}
+.docitem{border:1px solid var(--line);border-radius:5px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#141a1e}
+.docrow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.small{font-size:11.5px;color:var(--muted)}
+.status{min-height:44px;border:1px solid var(--line);border-radius:5px;padding:9px 11px;background:#12171b;font-size:13px;white-space:pre-wrap}
+.status.err{border-color:#7a3e3e;color:#f2a3a3}
+.status.ok{border-color:#2c5a57;color:#bfeee7}
+.copybox{width:100%;min-height:120px;font:400 12px var(--f-mono);background:#12171b;color:var(--ink);border:1px solid #34404a;border-radius:4px;padding:8px}
+@media (max-width:900px){.mbody{grid-template-columns:1fr;overflow-y:auto}.mform{border-right:0;border-bottom:1px solid var(--line);overflow:visible}.mside{overflow:visible}.docrow{grid-template-columns:1fr}}
+@media (max-width:900px){
+  body{overflow:auto}
+  .app{height:auto}
+  .main{grid-template-columns:1fr}
+  .stage{height:78vh}
+  .panel{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .proc-top{grid-template-columns:1fr;grid-template-rows:minmax(0,1.2fr) minmax(0,1fr)}
+  .stagehint{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="titlebar"><h1>화장품 제형 분해도</h1><p>제품군별 처방을 상(phase)으로 분해하고, 넣는 순서·온도·교반에 따라 제형 구조가 어떻게 만들어지는지 봅니다.</p></div>
+  <div class="spec-axis"><span>물에 녹은 상태</span><span>고분자 네트워크</span><span>에멀전</span><span>결정·분체 구조</span></div>
+  <nav class="spectrum" id="tabs" aria-label="제품군"></nav>
+</header>
+<div class="main">
+  <section class="stage" id="stage">
+    <div class="modebar">
+      <div class="seg" role="tablist">
+        <button id="m3d" class="on" role="tab">3D 상 분해</button>
+        <button id="mproc" role="tab">제조 공정</button>
+      </div>
+      <span class="stagehint" id="hint">원료를 누르면 정보, 더블클릭하거나 상 이름표를 누르면 그 상으로 확대됩니다.</span>
+    </div>
+
+    <div id="v3d">
+      <canvas id="c3d" aria-label="상별 3D 분해 모델"></canvas>
+      <div class="labels" id="labels"></div>
+      <div class="tip" id="tip"></div>
+      <div class="formlegend" id="flegend"></div>
+      <div class="explodebar">
+        <span>완제품</span><input type="range" id="explode" min="0" max="100" value="80" aria-label="분해 정도"><span>상 분해</span>
+        <span class="k" id="ek">80%</span><button class="btn" id="homeBtn" type="button">전체 보기</button>
+      </div>
+    </div>
+
+    <div id="vproc">
+      <div class="proc-top">
+        <div class="vesselbox"><div class="boxlabel">제조 탱크</div><canvas id="cv" aria-label="제조 공정 애니메이션"></canvas>
+          <div class="rpmctl" id="rpmctl"></div></div>
+        <div class="microbox"><div class="boxlabel">미세구조 (개략도)</div><canvas id="cm" aria-label="미세구조 개략도"></canvas>
+          <div class="micro-note" id="mnote"></div></div>
+      </div>
+      <div class="stepcard" id="stepcard">
+        <div class="stepnav">
+          <button class="btn" id="sprev">←</button>
+          <div class="dots" id="dots"></div>
+          <button class="btn" id="snext">→</button>
+          <button class="btn primary" id="splay">자동 재생</button>
+        </div>
+        <h3 class="steptitle" id="stitle"></h3>
+        <div class="cond" id="scond"></div>
+        <p id="sdesc"></p>
+        <p class="why" id="swhy"></p>
+      </div>
+    </div>
+    <div class="err" id="err">3D 라이브러리를 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 새로고침해 주세요.</div>
+  </section>
+
+  <aside class="panel" id="panel">
+    <section class="sec" id="phead"></section>
+    <section class="sec" id="psel"></section>
+    <section class="sec"><h2>대표 처방 (상별)</h2><div id="pform"></div><p class="note" id="pfnote"></p></section>
+    <section class="sec"><h2>설계 포인트</h2><ul class="pts" id="pdesign"></ul></section>
+    <section class="sec mkt" id="pmarket" hidden></section>
+    <section class="sec"><h2>제조 순서</h2><ol class="steps" id="psteps"></ol></section>
+    <section class="sec"><h2>모든 제품군 공통 원칙</h2><ul class="pts" id="pcommon"></ul></section>
+    <section class="sec">
+      <h2>근거 표시</h2>
+      <div class="legend">
+        <span><span class="chip src">처방</span>원료사·공개 가이드 처방 원문</span>
+        <span><span class="chip reg">규정</span>국내외 법규</span>
+        <span><span class="chip lit">논문</span>학술 논문·학위논문</span>
+        <span><span class="chip pat">특허</span>특허 문헌의 실시예·청구항</span>
+        <span><span class="chip qa">실무</span>원료사 기술 Q&amp;A·업계 매체</span>
+        <span><span class="chip typ">일반</span>업계 통상값, 처방마다 다름</span>
+        <span><span class="chip calc">계산</span>처방 수치로 직접 계산</span>
+      </div>
+      <div class="legend"><span style="width:100%">직접 추가한 제품(AI 분석)에는 아래 세 가지만 씁니다.</span>
+        <span><span class="chip doc">입력자료</span>넣은 특허·논문 본문에서 인용 구절까지 확인됨</span>
+        <span><span class="chip inci">전성분</span>입력한 전성분(텍스트·사진)에서 확인됨</span>
+        <span><span class="chip est">추정</span>일반 처방 지식에 의한 추정</span>
+      </div>
+      <p class="note">함량과 공정 조건은 공개된 원료사 가이드 처방을 그대로 옮긴 것이며, 실제 생산 처방이 아닙니다. 미세구조 그림은 이해를 돕는 개략도로, 크기 비율은 대략적입니다.</p>
+    </section>
+    <section class="sec src"><h2>이 제품군의 근거 자료</h2><ol id="psrc"></ol></section>
+  </aside>
+</div>
+</div>
+
+<div class="modal" id="addModal" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+    <div class="mhead"><h2 id="addTitle">자료로 제품 분해도 만들기</h2><button class="btn" id="addClose">닫기</button></div>
+    <div class="mbody">
+      <div class="mform">
+        <div class="docrow" style="grid-template-columns:2fr 1fr">
+          <label class="fld" for="fName">제품명 (필수)<input type="text" id="fName" placeholder="예: OO 수분 젤크림 50 mL"></label>
+          <label class="fld" for="fType">제품 유형<select id="fType"></select></label>
+        </div>
+        <label class="fld" for="fInci">전성분 (포장이나 공식몰 표기를 그대로 붙여넣기)<textarea id="fInci" rows="5" placeholder="정제수, 글리세린, 부틸렌글라이콜, ..."></textarea></label>
+        <div class="fld" id="imgWrap" hidden><label for="fImg">전성분 사진 (선택, 포장 뒷면 촬영본)</label><input type="file" id="fImg" accept="image/*" multiple><span class="small" id="imgNote"></span></div>
+        <h3>특허·논문·기술 자료 (선택, 여러 개 가능)</h3>
+        <p class="small" style="margin:0">본문을 붙여넣거나 PDF·TXT 파일을 고르세요. 여기 넣은 본문만 "입력자료" 근거로 인정됩니다.</p>
+        <div id="docList" style="display:flex;flex-direction:column;gap:10px"></div>
+        <button class="btn" id="addDoc" style="align-self:flex-start">+ 자료 추가</button>
+      </div>
+      <div class="mside">
+        <h3>어떻게 분석하나요</h3>
+        <ul>
+          <li>AI가 넣어 주신 전성분과 자료만 읽고, 지금 탭들과 같은 형식(상 분해, 공정 단계, 미세구조, 원료 역할)으로 만듭니다.</li>
+          <li>자료에 없는 내용은 모두 <span class="chip est">추정</span>으로 표시됩니다. 다른 AI가 웹 검색을 해도, 넣은 본문에서 확인되지 않는 내용은 근거로 인정하지 않습니다.</li>
+          <li>실제 함량은 자료에 적혀 있을 때만 확정값으로 씁니다. 전성분만 있으면 순서로 범위를 추정합니다.</li>
+          <li><span class="chip doc">입력자료</span> 표시는 AI가 인용한 구절이 넣은 본문에 실제로 있는지 페이지가 다시 확인한 것만 남깁니다. 없으면 추정으로 내립니다.</li>
+          <li>방법 1은 30초~2분 걸리고 처음 한 번 사용 허가 창이 뜹니다. 사용량은 보는 사람의 Claude 계정에서 차감됩니다. 방법 2는 붙여넣은 AI 계정의 사용량을 씁니다.</li>
+          <li id="saveNote">결과는 이 페이지에 저장되어 다음에 열어도 남습니다.</li>
+        </ul>
+        <div class="status" id="runStatus">제품명과 전성분 또는 자료를 넣고 분석을 시작하세요.</div>
+        <div id="inpageBox" hidden style="display:flex;flex-direction:column;gap:8px">
+          <h3>방법 1 · 이 페이지에서 바로 분석 (claude.ai 안에서만)</h3>
+          <div class="actions"><button class="btn primary" id="runBtn">Claude로 바로 분석</button><button class="btn" id="stopBtn" hidden>중지</button></div>
+        </div>
+        <h3>방법 2 · 다른 AI로 분석 (ChatGPT, 다른 Claude 계정 등 어디서나)</h3>
+        <ol style="margin:0;padding-left:18px;font-size:12.5px;display:flex;flex-direction:column;gap:3px">
+          <li>"분석 프롬프트 복사"를 누릅니다.</li>
+          <li>ChatGPT나 다른 Claude 채팅에 붙여넣고 보냅니다. 전성분 사진이 있으면 그 채팅에 함께 첨부하세요.</li>
+          <li>AI 답변 전체를 복사해 아래 칸에 붙여넣고 "답변으로 만들기"를 누릅니다. 그동안 왼쪽 입력은 지우지 마세요(인용 구절 대조에 씁니다).</li>
+        </ol>
+        <div class="actions"><button class="btn" id="copyPromptBtn">분석 프롬프트 복사</button></div>
+        <label class="fld" for="pasteJson">AI 답변 붙여넣기<textarea id="pasteJson" rows="4" placeholder='{"name": "...", "phases": [...], ...}'></textarea></label>
+        <div class="actions"><button class="btn primary" id="importBtn">답변으로 만들기</button></div>
+        <h3>내 분석 백업·옮기기</h3>
+        <div class="actions"><button class="btn" id="exportBtn">모두 내보내기</button><button class="btn" id="importFileBtn">백업 가져오기</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="copyModal" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="copyTitle" style="width:min(720px,100%)">
+    <div class="mhead"><h2 id="copyTitle">채팅에서 검증 요청하기</h2><button class="btn" id="copyClose">닫기</button></div>
+    <div class="mside">
+      <p style="margin:0" id="copyDesc"></p>
+      <textarea class="copybox" id="copyText" readonly></textarea>
+      <div class="actions"><button class="btn primary" id="copyBtn">복사</button><button class="btn" id="dlBtn" hidden>파일로 저장</button><span class="small" id="copyNote"></span></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+/* ═════════════ 출처 ═════════════ */
+const SRC={
+ cargill:{t:'Cargill — Clear Hydrating Toner (Formula C030)',u:'https://www.cargill.com/bioindustrial/doc/1432225023806/formula-c030.pdf'},
+ kcia_mit:{t:'대한화장품협회 성분사전 — 메칠이소치아졸리논 배합한도',u:'https://kcia.or.kr/cid/search/ingd_view.php?no=206'},
+ kcia_pe:{t:'대한화장품협회 — 페녹시에탄올 최대 1%',u:'https://kcia.or.kr/pedia/sub03/sub03_01.php?no=289&type=view'},
+ msr_ess:{t:'MySkinRecipes — Toner/Essence 처방 Q&A',u:'https://www.myskinrecipes.com/expert/qa/toner-essence-formulation-feasibility-and-mixing-instructions'},
+ msr_night:{t:'MySkinRecipes — Night Facial Essence (가용화 비율, pH 5.0–6.0)',u:'https://www.myskinrecipes.com/expert/qa/formulating-a-night-facial-essence-with-specific-extracts-and-vitamins'},
+ droracle:{t:'오라클코스메틱 — 나이아신아마이드 2~5% 미백 기능성',u:'https://m.droracle.co.kr/article/화장품-성분연구/22/22596/'},
+ fb_serum:{t:'Formula Botanica — Hydrating Facial Serum',u:'https://formulabotanica.com/hydrating-facial-serum/'},
+ msr_serum:{t:'MySkinRecipes — Serum Q&A (잔탄검 0.1–2%, 벤조산나트륨 pH)',u:'https://www.myskinrecipes.com/expert/qa/serum-formulation-with-niacinamide-pha-and-hyaluronic-acid'},
+ lc_ha:{t:'Lotioncrafter — Simplicity Serum (HA 분자량과 점도)',u:'https://cdn.shopify.com/s/files/1/0026/8317/5001/files/Simplicity_Serum_-_Firm_UP_82eef09b-0124-4f91-9e43-e757bf8baee2.pdf'},
+ happi_gel:{t:'Happi — Tightening Eye Gel 처방',u:'https://www.happi.com/issues/2017-09-01/view_formulary/tightening-eye-gel'},
+ chakra1:{t:'Skinchakra — Working with Carbomer (Part I)',u:'https://skinchakra.eu/blog/archives/233-Working-with-Carbomer-part-I.html'},
+ chakra2:{t:'Skinchakra — Working with Carbomer (Part II)',u:'https://skinchakra.eu/blog/archives/236-Working-with-Carbomer-Part-II.html'},
+ msr_carb:{t:'MySkinRecipes — Carbomer 투입 시점과 전단 민감성',u:'https://www.myskinrecipes.com/expert/qa/proper-procedure-and-timing-for-adding-carbomer-to-adjust-viscosity'},
+ msr_carb2:{t:'MySkinRecipes — 크림에 카보머 넣는 순서(전해질 민감성)',u:'https://www.myskinrecipes.com/expert/qa/proper-procedure-for-incorporating-carbomer-into-cream'},
+ croda_gc:{t:'Croda(Sederma) — Equalizing Brightening Gel-Cream',u:'https://www.personalcaremagazine.com/formulation-details/1306/equalizing-brightening-gel-cream-with-wonderlight'},
+ clariant_gc:{t:'Clariant — Emulsifier Free Refreshing Moisturizing Cream-Gel',u:'https://personalcaremagazine.com/formulation-details/101/emulsifier-free-refreshing-moisturizing-cream-gel'},
+ d5:{t:'Premium Beauty News — EU 2024/1328 D4·D5·D6 제한',u:'https://www.premiumbeautynews.com/en/eu-further-restricts-the-use-of,23927'},
+ ev_lotion:{t:'Evonik — O/W Caring Body Lotion BR 7/10-3',u:'https://personalcaremagazine.com/formulation-details/1109/o-w-caring-body-lotion-br-7-10-3'},
+ ev_cream:{t:'Evonik — O/W Body Cream for Normal Skin F 23/97',u:'https://personalcaremagazine.com/formulation-details/517/o-w-body-cream-for-normal-skin-f-23-97'},
+ cosmax:{t:'Kim, Oh, Lee (2020) Controlling the emulsion stability of cosmetics through shear mixing process, Korea-Australia Rheology Journal 32(4) — 코스맥스 R&I',u:'https://www.scribd.com/document/701716678/s13367-020-0023-4'},
+ dankook:{t:'홍인권 외 (2016) 비이온성 혼합유화제를 이용한 화장용 크림 유화액의 유화안정성 평가, 공업화학',u:'https://koreascience.kr/article/JAKO201630932413201.pdf'},
+ croda_sun:{t:'Croda — Mineral High Protection Sunscreen SPF 50 (BR0156)',u:'https://www.sofw.com/jdownloads/Public/Formulation-Croda-High-Protection-Sunscreen.pdf'},
+ nifds:{t:'식품의약품안전평가원 — 자외선 차단제 바로알고 올바르게 사용하세요 (차단 성분 최대 함량)',u:'https://www.korea.kr/goNews/resources/attaches/2014.05/30/dcf8fb5bf48542c7452486b5fa75693a.pdf'},
+ happi_zno:{t:'Happi — Best Practices for Formulating Sunscreen with ZnO',u:'https://www.happi.com/best-practices-for-formulating-sunscreen-with-zno/'},
+ evonik_patch:{t:'Evonik — Ageless Beauty Eye Patches (FU 12/23-37) 하이드로겔 패치 처방',u:'https://products.evonik.com/assets/n_/us/Ageless_Beauty_Eye_Patches_EN_FORM_GEN_2790801_en_US.pdf'},
+ us10011712:{t:'US 10,011,712 — 마스크 베이스용 하이드로겔 조성물과 제조 방법 (겔화 고분자·폴리올 범위)',u:'https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/10011712'},
+ us8663664:{t:'US 8,663,664 — 온도 감응형 상태 변화 하이드로겔 (로커스트빈검·카라기난, 30–50 °C에서 유동화)',u:'https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/8663664'},
+ us7470726:{t:'US 7,470,726 — 하이드로겔 성형 공정 (필름에 붓기·냉각·다이커팅)',u:'https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/7470726'},
+ biodance_inci:{t:'Little Wonderland — Biodance Bio-Collagen Real Deep Mask 전성분 (판매처 표기, 최신은 포장 확인)',u:'https://www.littlewonderland.eu/en/biodance-bio-collagen-real-deep-mask.html'},
+ biodance_use:{t:'B Perfect Cosmetics — Biodance Bio-Collagen Real Deep Mask 사용법·설명',u:'https://www.bperfectcosmetics.com/products/biodance-bio-collagen-real-deep-mask'},
+ nagase:{t:'Nagase Viita — Gentle Luxe Cleanser (Soap-Based Foam)',u:'https://www.personalcaremagazine.com/formulation-details/2863/gentle-luxe-cleanser-soap-based-foam'},
+ msr_soap:{t:'MySkinRecipes — 비누계 폼 클렌징 크림 공정(75–80 °C, 15–20분)',u:'https://www.myskinrecipes.com/expert/qa/foam-cleansing-cream-consistency-issue-at-room-temperature'},
+ msr_soap_ph:{t:'MySkinRecipes — 비누계 세안제의 높은 pH',u:'https://www.myskinrecipes.com/expert/qa/gentle-facial-cleanser-formulation-addressing-high-ph'},
+ chula:{t:'Chulalongkorn Univ. 석사논문 — 포타슘라우레이트 결정화와 냉각 속도',u:'https://cuir.car.chula.ac.th/dspace/handle/123456789/81520?mode=full'}
+};
+const TAGN={src:'처방',reg:'규정',lit:'논문',pat:'특허',qa:'실무',typ:'일반',calc:'계산',doc:'입력자료',inci:'전성분',est:'추정'};
+function chip(tag,src,quote){
+  if(!tag||!TAGN[tag]) return ''; const s=src&&SRC[src]; const ttl=(s?s.t:'')+(quote?' — “'+quote+'”':'');
+  if(s&&s.u) return '<a class="chip '+tag+'" href="'+esc(s.u)+'" target="_blank" rel="noopener" title="'+esc(ttl)+'">'+TAGN[tag]+'</a>';
+  return '<span class="chip '+tag+'"'+(ttl?' title="'+esc(ttl)+'"':'')+'>'+TAGN[tag]+'</span>';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ═════════════ 상 색 ═════════════ */
+const KIND={water:{c:'#5fb3e6',n:'수상'},active:{c:'#56c8ae',n:'활성·보습'},solub:{c:'#a6e36f',n:'가용화'},poly:{c:'#7bd389',n:'고분자'},oil:{c:'#f0b44c',n:'유상'},emul:{c:'#f2876a',n:'유화제'},cool:{c:'#b79cf0',n:'냉각상'},ph:{c:'#f07aa8',n:'중화·pH'},powder:{c:'#d5dbe2',n:'분체'},surf:{c:'#6fd0e8',n:'계면활성제'}};
+
+function I(inci,ko,pct,fn,note,tag,src,form){return {inci,ko,pct,fn,note,tag,src,form};}
+const QS='qs';
+
+/* ═════════════ 제품 데이터 ═════════════
+   함량은 각 출처 처방 원문 그대로. {to:x}는 "정제수 to 100" 의 계산값 */
+const PRODUCTS=[
+{id:'toner',name:'토너',en:'Toner',struct:'가용화 수용액',container:'bottle',
+ look:{color:0xcfe9f5,opacity:.22},
+ summary:'물에 보습제를 녹이고, 물에 녹지 않는 향은 가용화제가 만든 미셀 속에 가둬 투명하게 만든 수용액입니다.',
+ props:[['외관','투명, 무알코올','src','cargill'],['공정','상온 혼합 (가열 단계 없음)','src','cargill'],['구조','물 + 미셀 (수 nm)','typ'],['pH','원 처방은 젖산으로 조정, 목표값 미기재','src','cargill']],
+ fsrc:'cargill',fnote:'원 처방의 상(Part) 구분을 보기 쉽게 4개로 묶었습니다. 함량은 원문 그대로이며 정제수는 나머지 합으로 계산했습니다.',
+ phases:[
+  {k:'A',name:'수상',kind:'water',items:[I('Water','정제수',{to:96.8},'용매'),I('Disodium EDTA','다이소듐이디티에이',0.10,'킬레이트제','물속 금속 이온을 묶어 변색·산패를 막고 보존제가 잘 듣게 돕습니다.','typ')]},
+  {k:'B',name:'보습·컨디셔닝',kind:'active',items:[I('Glycerin','글리세린',0.30,'보습제'),I('Butylene Glycol','부틸렌글라이콜',1.50,'보습제·용매'),I('Hydrolyzed Jojoba Esters (and) Water',null,0.50,'피부 컨디셔닝'),I('Sodium Hyaluronate (and) Water','소듐하이알루로네이트',0.10,'보습 고분자')]},
+  {k:'C',name:'가용화 프리믹스',kind:'solub',items:[I('PPG-26-Buteth-26 (and) PEG-40 Hydrogenated Castor Oil',null,0.70,'가용화제','향처럼 적은 양의 오일을 미셀 속에 가둬 물에 투명하게 섞이게 합니다. 반드시 향과 먼저 섞은 뒤 물에 넣습니다.','typ'),I('Fragrance','향료',QS,'향')]},
+  {k:'D',name:'보존·pH',kind:'cool',items:[I('Methylisothiazolinone','메칠이소치아졸리논',QS,'보존제','원 처방(미국)의 보존제입니다. 국내에서는 사용 후 씻어내는 제품에만 0.0015%까지 쓸 수 있고 기타 제품에는 사용금지라, 토너라면 다른 보존제로 바꿔야 합니다.','reg','kcia_mit'),I('Lactic Acid (and) Water','락틱애씨드',QS,'pH 조정제')]}
+ ],
+ steps:[
+  {t:'수상 준비',add:['A'],temp:25,mixer:'paddle',rpm:300,time:'용해까지',desc:'탱크에 정제수를 넣고 EDTA를 녹입니다.',why:'금속 이온을 먼저 묶어 두면 이후 넣는 원료의 변색과 보존력 저하를 줄일 수 있습니다.',tag:'typ',color:'#d6eef8',op:.22,visc:0,micro:{bg:'water',mol:.12,scale:'≈ 10 nm'}},
+  {t:'보습제·활성 성분 용해',add:['B'],temp:25,mixer:'paddle',rpm:300,time:'투명해질 때까지',desc:'글리세린, BG, 호호바 에스터, 히알루론산 용액을 차례로 넣어 녹입니다.',why:'모두 물에 녹는 원료라 가열이 필요 없습니다. 히알루론산은 고분자라 천천히 풀리므로 덩어리 없이 투명해질 때까지 섞습니다.',tag:'typ',color:'#d6eef8',op:.22,visc:.02,micro:{bg:'water',mol:.5,ha:.15,scale:'≈ 10 nm'}},
+  {t:'향 가용화 프리믹스 투입',add:['C'],side:{label:'C상 프리믹스',color:'#e8f5c8',temp:25},temp:25,mixer:'paddle',rpm:300,time:'—',desc:'별도 용기에서 향과 가용화제를 먼저 섞은 뒤 수상에 넣습니다.',why:'향은 오일이라 물에 바로 넣으면 뿌옇게 떠오릅니다. 가용화제와 먼저 섞으면 향 분자가 미셀 안쪽에 자리 잡아, 물에 넣었을 때 빛을 거의 산란하지 않는 수 nm 크기로 퍼져 투명하게 남습니다. 가용화제는 오일 성분의 1~3배를 쓰는 것이 통상 출발점입니다.',tag:'qa',src:'msr_night',color:'#d9f0f6',op:.24,visc:.02,micro:{bg:'water',mol:.5,ha:.15,mic:.7,scale:'≈ 10 nm'}},
+  {t:'보존제·pH 조정',add:['D'],temp:25,mixer:'paddle',rpm:200,time:'—',ph:'젖산으로 조정',desc:'보존제를 넣고 젖산 용액으로 pH를 맞춥니다.',why:'pH는 보존제의 효력과 피부 자극에 함께 영향을 줍니다. 원 처방은 목표 pH를 밝히지 않았습니다.',tag:'src',src:'cargill',color:'#d9f0f6',op:.24,visc:.02,micro:{bg:'water',mol:.55,ha:.15,mic:.7,scale:'≈ 10 nm'}},
+  {t:'여과·충전',add:[],temp:25,mixer:'none',rpm:0,time:'—',desc:'필터로 이물을 거른 뒤 용기에 충전합니다.',why:'투명 제품은 작은 이물도 눈에 띄므로 충전 전 여과가 일반적입니다.',tag:'typ',color:'#d9f0f6',op:.24,visc:.02,micro:{bg:'water',mol:.55,ha:.15,mic:.7,scale:'≈ 10 nm'}}
+ ],
+ design:[['제형의 핵심은 "투명함 유지"입니다. 물에 안 녹는 원료(향, 오일성 활성)는 가용화제로 미셀에 가둬야 합니다.','typ'],['가용화제가 모자라면 탁해지고, 너무 많으면 끈적임과 자극이 늘어납니다. 오일 성분 대비 1~3배가 출발점입니다.','qa','msr_night'],['보존제는 시장마다 규정이 다릅니다. 이 처방의 MIT는 국내 리브온 제품에 쓸 수 없습니다.','reg','kcia_mit']]
+},
+{id:'essence',name:'에센스',en:'Essence',struct:'고농도 수용액',container:'bottle',
+ look:{color:0xe9f1e6,opacity:.3},
+ summary:'토너와 같은 수용액 구조지만 미백·보습 활성 성분을 훨씬 많이 녹여 넣은 제품입니다. 이 예시는 활성·보습 원료만 약 23%입니다.',
+ props:[['구조','고농도 수용액','typ'],['공정','상온, 모든 원료를 물에 바로 투입','qa','msr_ess'],['목표 pH','5.0–6.0','qa','msr_night'],['활성·보습 원료 합','23.1%','calc']],
+ fsrc:'msr_ess',fnote:'원료사 Q&A에 올라온 토너/에센스 처방을 원료사가 "제조 가능"으로 답한 예시입니다. 상 구분은 이해를 위해 나눴고, 함량은 원문 그대로입니다. 원문에는 별도 보존제가 없으므로 실제 제품은 보존력 시험이 필요합니다.',
+ phases:[
+  {k:'A',name:'수상',kind:'water',items:[I('Water','정제수',{to:76.9},'용매')]},
+  {k:'B',name:'기능성·보습 분체',kind:'active',items:[I('Niacinamide','나이아신아마이드',5.00,'미백 기능성','국내 고시 기준 2~5% 배합 시 미백 기능성 원료입니다. 이 처방은 상한인 5%입니다.','reg','droracle'),I('Acetyl Glucosamine','아세틸글루코사민',3.00,'피부 컨디셔닝'),I('Panthenol','판테놀',1.00,'보습·진정')]},
+  {k:'C',name:'글라이콜',kind:'active',items:[I('Butylene Glycol','부틸렌글라이콜',3.00,'보습제·용매'),I('1,2-Hexanediol','1,2-헥산다이올',3.00,'보습·보존 보조','보습제이면서 미생물 증식을 억제하는 보조 효과가 있어 보존제 양을 줄이는 데 쓰입니다.','typ')]},
+  {k:'D',name:'추출물·히알루론산',kind:'cool',items:[I('Glycyrrhiza Extract (licochalcone A, 수용성)','감초 추출물',3.00,'진정'),I('Artemia Extract','플랑크톤 추출물',2.00,'피부 컨디셔닝'),I('MOIST24 (보습 복합 원료, 상품명)',null,3.00,'보습'),I('Hyaluronic Acid (Double Hyaluron Liquid)','하이알루로닉애씨드',0.10,'보습 고분자')]}
+ ],
+ steps:[
+  {t:'수상 준비',add:['A'],temp:25,mixer:'paddle',rpm:300,time:'—',desc:'정제수를 탱크에 넣습니다.',why:'에센스는 가열 없이 물에 차례로 녹이는 상온 공정입니다.',tag:'qa',src:'msr_ess',color:'#d6eef8',op:.22,visc:0,micro:{bg:'water',mol:.05,scale:'≈ 10 nm'}},
+  {t:'분체 활성 성분 용해',add:['B'],temp:25,mixer:'paddle',rpm:400,time:'완전 용해까지',desc:'나이아신아마이드, 아세틸글루코사민, 판테놀을 넣고 녹입니다.',why:'함량이 높은 분체는 녹는 데 시간이 걸립니다. 남은 결정이 있으면 나중에 석출 핵이 되므로 완전히 투명해질 때까지 섞습니다.',tag:'typ',color:'#dcefef',op:.25,visc:.03,micro:{bg:'water',mol:.65,scale:'≈ 10 nm'}},
+  {t:'글라이콜 투입',add:['C'],temp:25,mixer:'paddle',rpm:300,time:'—',desc:'BG와 1,2-헥산다이올을 넣습니다.',why:'글라이콜은 보습과 함께 물에 잘 안 녹는 추출물 성분의 용해를 돕고, 1,2-헥산다이올은 보존 보조 역할을 합니다.',tag:'typ',color:'#dff0ea',op:.27,visc:.04,micro:{bg:'water',mol:.8,scale:'≈ 10 nm'}},
+  {t:'추출물·히알루론산 투입',add:['D'],temp:25,mixer:'paddle',rpm:300,time:'—',desc:'추출물과 히알루론산 용액을 넣고 섞습니다.',why:'추출물은 열과 오래 젓는 것에 약한 경우가 많아 마지막에 넣습니다.',tag:'typ',color:'#e6f1e3',op:.3,visc:.06,micro:{bg:'water',mol:.9,ha:.2,scale:'≈ 10 nm'}},
+  {t:'pH 확인',add:[],temp:25,mixer:'paddle',rpm:200,time:'—',ph:'5.0–6.0',desc:'pH를 재고 필요하면 맞춥니다.',why:'피부에 맞고 대부분의 활성 성분이 안정한 범위로 5.0–6.0을 권합니다.',tag:'qa',src:'msr_night',color:'#e6f1e3',op:.3,visc:.06,micro:{bg:'water',mol:.9,ha:.2,scale:'≈ 10 nm'}}
+ ],
+ design:[['토너와 구조는 같고, 차이는 활성 성분의 양과 종류입니다. 나이아신아마이드 5%는 미백 기능성 고시 범위의 상한입니다.','reg','droracle'],['고농도 분체는 저온 보관 중 결정이 다시 생길 수 있습니다. 저온 안정성 시험으로 확인합니다.','typ'],['원 처방에는 보존제가 따로 없습니다. 1,2-헥산다이올만으로 충분한지는 보존력 시험으로 판단해야 합니다.','typ']]
+},
+{id:'serum',name:'세럼',en:'Serum',struct:'다당류 고분자 용액',container:'dropper',
+ look:{color:0xf3e3ea,opacity:.42},
+ summary:'잔탄검과 히알루론산 같은 다당류가 물속에서 풀려 사슬끼리 얽히며 약한 네트워크를 만들어, 흐르지만 쫀득한 점성을 냅니다.',
+ props:[['구조','다당류 고분자 용액 (약한 네트워크)','typ'],['공정','상온, 검을 글리세린에 먼저 분산','src','fb_serum'],['pH','5.0–5.5','src','fb_serum'],['외관','투명 겔상 (clear grade 잔탄검 사용)','src','fb_serum']],
+ fsrc:'fb_serum',fnote:'Formula Botanica 처방 원문 함량입니다. 원문은 글리세린·잔탄검을 A상에 두었지만, 방법대로 "검 프리믹스"를 별도 상으로 표시했습니다.',
+ phases:[
+  {k:'A',name:'수상',kind:'water',items:[I('Rosa Damascena Flower Water (보존 처리)','장미꽃수',50.00,'용매·향'),I('Water','정제수',45.30,'용매')]},
+  {k:'B',name:'검 프리믹스',kind:'poly',items:[I('Glycerin','글리세린',3.00,'보습제·분산매','검 가루를 먼저 적셔 물에 넣었을 때 뭉치지 않게 하는 분산 매질 역할도 합니다.','src','fb_serum'),I('Xanthan Gum','잔탄검',0.50,'점증제','미생물이 만드는 다당류입니다. 세럼 점도를 위해 0.1–2%, 보통 1% 전후로 씁니다. 가만히 두면 걸쭉하고 문지르면 묽어지는 성질 덕분에 펴 바르기 쉽습니다.','qa','msr_serum'),I('Sodium Hyaluronate','소듐하이알루로네이트',0.20,'보습 고분자','분자량이 낮을수록 같은 양에서 점도가 낮아집니다.','qa','lc_ha')]},
+  {k:'C',name:'보존제',kind:'cool',items:[I('Aqua, Sodium Benzoate, Potassium Sorbate','소듐벤조에이트·포타슘소르베이트',1.00,'보존제','벤조산나트륨은 pH 5.5 아래에서 효과가 있어, 최종 pH를 5.0–5.5로 맞추는 이유가 됩니다.','qa','msr_serum')]}
+ ],
+ steps:[
+  {t:'수상 준비',add:['A'],temp:25,mixer:'paddle',rpm:300,time:'—',desc:'장미꽃수와 정제수를 섞습니다.',why:'모든 공정이 상온이라 열에 약한 꽃수의 향을 지킬 수 있습니다.',tag:'src',src:'fb_serum',color:'#f1e2e8',op:.25,visc:0,micro:{bg:'water',mol:.15,scale:'≈ 1 µm'}},
+  {t:'검 프리믹스 만들기',add:[],side:{label:'B상 (글리세린+검)',color:'#efe6c9',temp:25},temp:25,mixer:'paddle',rpm:300,time:'—',desc:'작은 비커에 글리세린을 달고 잔탄검과 히알루론산 가루를 넣어 고루 섞습니다.',why:'다당류 가루를 물에 바로 넣으면 겉만 젖어 속이 마른 덩어리(피시아이)가 생깁니다. 물에 녹지 않는 글리세린에 먼저 흩어 두면 입자가 하나씩 물을 만납니다.',tag:'src',src:'fb_serum',color:'#f1e2e8',op:.25,visc:0,micro:{bg:'water',mol:.15,scale:'≈ 1 µm'}},
+  {t:'천천히 투입 후 수화',add:['B'],temp:25,mixer:'paddle',rpm:500,time:'팽윤될 때까지 휴지',desc:'프리믹스를 조금씩 수상에 넣고 저은 뒤, 가만히 두어 검과 히알루론산이 풀리게 합니다.',why:'사슬이 물을 머금고 펴지면서 서로 얽혀 점도가 오릅니다. 다 풀리면 입자가 보이지 않고 투명해집니다.',tag:'src',src:'fb_serum',color:'#f2e3ea',op:.38,visc:.55,micro:{bg:'water',mol:.2,poly:1,expand:1,pkind:'xanthan',ha:.5,scale:'≈ 1 µm'}},
+  {t:'보존제 투입·pH 5.0–5.5',add:['C'],temp:25,mixer:'paddle',rpm:200,time:'—',ph:'5.0–5.5',desc:'입자가 남지 않은 것을 확인하고 보존제를 넣은 뒤 pH를 맞춥니다.',why:'벤조산나트륨 계열 보존제는 pH가 5.5보다 낮아야 제대로 작동합니다.',tag:'qa',src:'msr_serum',color:'#f3e3ea',op:.42,visc:.6,micro:{bg:'water',mol:.25,poly:1,expand:1,pkind:'xanthan',ha:.5,scale:'≈ 1 µm'}}
+ ],
+ design:[['세럼의 사용감은 거의 다당류가 결정합니다. 잔탄검 0.5%만으로도 흐르는 물이 쫀득한 세럼으로 바뀝니다.','src','fb_serum'],['좋은 점증제는 가만히 있을 때 걸쭉하고(입자를 띄움), 바를 때 묽어집니다(전단 묽어짐). 유변 측정으로 정량화하는 부분입니다.','typ'],['히알루론산 분자량을 바꾸면 같은 함량에서도 점도가 달라집니다.','qa','lc_ha']]
+},
+{id:'gel',name:'젤',en:'Gel',struct:'카보머 마이크로겔',container:'jar',
+ look:{color:0xd9f0f2,opacity:.45},
+ summary:'산성일 때는 묽던 아크릴계 고분자가 염기로 중화되는 순간 전하끼리 밀어내며 부풀어, 맑고 탱글한 젤이 됩니다.',
+ props:[['구조','팽윤된 고분자 마이크로겔이 빽빽이 찬 상태','typ'],['목표 pH','약 6.5','src','happi_gel'],['공정','상온, 중화로 점도 형성','src','happi_gel'],['외관','투명 젤','typ']],
+ fsrc:'happi_gel',fnote:'Happi에 실린 아이젤 처방 원문 함량입니다(합계 100%). C상 원료는 상품명만 공개되어 INCI를 적지 않았습니다.',
+ phases:[
+  {k:'A',name:'수상·고분자',kind:'water',items:[I('Water','정제수',90.05,'용매'),I('Glycerin','글리세린',3.50,'보습제'),I('Preservative','보존제',QS,'보존제','페녹시에탄올을 쓴다면 국내 최대 1%입니다.','reg','kcia_pe'),I('Acrylates/C10-30 Alkyl Acrylate Crosspolymer',null,0.45,'겔화제','자기 습윤형(self-wetting) 분말이라 물 위에 뿌려 두면 스스로 젖습니다. 산성 상태에서는 거의 점도가 없습니다.','typ')]},
+  {k:'B',name:'중화',kind:'ph',items:[I('Sodium Hydroxide (10% 용액)','소듐하이드록사이드',QS,'중화제','pH 약 6.5가 될 때까지 넣습니다. pH 7을 넘기면 오히려 점도와 투명도가 떨어집니다.','qa','chakra1')]},
+  {k:'C',name:'활성 원료',kind:'cool',items:[I('REGU-AGE PF (상품명)',null,3.00,'활성 원료'),I('PENTACARE NA PF (상품명)',null,3.00,'활성 원료')]}
+ ],
+ steps:[
+  {t:'수상 준비',add:[],temp:25,mixer:'paddle',rpm:300,time:'—',desc:'정제수, 글리세린, 보존제를 넣고 섞습니다.',why:'고분자를 넣기 전에 녹을 것은 먼저 녹여 둡니다.',tag:'src',src:'happi_gel',color:'#d6eef8',op:.22,visc:0,partial:{A:['Water','Glycerin','Preservative']},micro:{bg:'water',mol:.3,scale:'≈ 1 µm'}},
+  {t:'고분자 분산·습윤',add:['A'],temp:25,mixer:'paddle',rpm:300,time:'완전히 젖을 때까지',desc:'고분자 가루를 물 표면에 뿌려 스스로 젖게 둔 뒤 천천히 섞습니다.',why:'중화 전 분산액은 pH 약 3.5의 산성이고 묽습니다. 이때 고분자는 작게 뭉친 실타래 상태입니다.',tag:'qa',src:'chakra2',color:'#e2eef0',op:.3,visc:.05,ph:'≈ 3.5',micro:{bg:'water',mol:.3,poly:1,expand:.1,pkind:'carbomer',scale:'≈ 1 µm'}},
+  {t:'중화 → 젤 형성',add:['B'],temp:25,mixer:'paddle',rpm:300,time:'—',ph:'≈ 6.5',desc:'수산화나트륨 용액을 넣어 pH 약 6.5로 맞춥니다. 이 순간 점도가 급격히 오릅니다.',why:'중화로 카복실기가 음전하를 띠면 사슬끼리 밀어내며 부풀고, 부푼 미세 젤 입자들이 공간을 빽빽이 채워 흐름을 막습니다. 점도와 투명도는 pH 6–7에서 가장 높고, 7을 넘기면 떨어집니다.',tag:'qa',src:'chakra1',color:'#dff1f3',op:.42,visc:.85,micro:{bg:'water',mol:.3,poly:1,expand:1,pkind:'carbomer',scale:'≈ 1 µm'}},
+  {t:'활성 원료 투입',add:['C'],temp:25,mixer:'paddle',rpm:200,time:'—',desc:'활성 원료를 넣고 낮은 속도로 섞습니다.',why:'젤이 된 뒤 고전단(약 2,500 rpm 이상)으로 저으면 사슬이 끊어져 다시 묽어질 수 있습니다. 염(전해질)이 많은 원료도 점도를 떨어뜨립니다.',tag:'qa',src:'msr_carb',color:'#d9f0f2',op:.45,visc:.85,micro:{bg:'water',mol:.5,poly:1,expand:1,pkind:'carbomer',scale:'≈ 1 µm'}},
+  {t:'pH 재확인',add:[],temp:25,mixer:'none',rpm:0,time:'—',ph:'≈ 6.5',desc:'필요하면 pH를 다시 6.5 근처로 맞춥니다.',why:'원료 투입으로 pH가 흔들리면 점도도 함께 변합니다.',tag:'src',src:'happi_gel',color:'#d9f0f2',op:.45,visc:.85,micro:{bg:'water',mol:.5,poly:1,expand:1,pkind:'carbomer',scale:'≈ 1 µm'}}
+ ],
+ design:[['젤의 점도 스위치는 pH입니다. 중화 전에는 묽고, pH 6–7에서 최대가 됩니다.','qa','chakra1'],['중화 후에는 고전단을 피하고, 전해질(염, 산성 활성 성분)이 많으면 점도가 무너집니다.','qa','msr_carb'],['같은 젤에 오일을 조금 넣고 고분자 유화제를 더하면 젤크림이 됩니다. 다음 탭에서 비교해 보세요.','typ']]
+},
+{id:'hydrogel',name:'하이드로겔 패치',en:'Hydrogel Eye Patch',struct:'다당류 겔 시트 (성형)',container:'patch',
+ look:{color:0xeef1f3,opacity:.72},
+ summary:'잔탄검과 로커스트빈검을 뜨거운 물에 풀어 80 °C에서 틀에 붓고, 식으면서 두 다당류가 엉겨 붙어 손으로 집을 수 있는 탄성 시트가 됩니다. 탱크에서 섞어 끝나는 다른 제품과 달리 붓고, 식히고, 자르는 성형 공정이 핵심입니다.',
+ props:[['구조','잔탄검 + 로커스트빈검 겔 네트워크 속에 에센스·오일 분산','typ'],['겔화 고분자 합','2.0% (잔탄검 1.2 + 로커스트빈검 0.8)','calc'],['pH','5.0–5.5','src','evonik_patch'],['공정','물 85 °C → 80 °C에서 틀에 붓기 → 상온 냉각','src','evonik_patch'],['외관','흰색 또는 색이 있는 고체 겔 패치','src','evonik_patch']],
+ fsrc:'evonik_patch',fnote:'Evonik 공개 처방(FU 12/23-37) 원문 함량입니다(A~C 합 100%). 재단·포장 단계는 원문에 없어 특허 공정으로 보충했습니다.',
+ phases:[
+  {k:'A',name:'검 슬러리 (글리세린 + 다당류 + 활성)',kind:'poly',items:[I('Glycerin','글리세린',5.00,'보습·분산매','검 가루를 먼저 적셔 뜨거운 물에 넣었을 때 덩어리지지 않게 합니다. 폴리올은 겔에 유연성을 줍니다.','pat','us10011712'),I('Xanthan Gum','잔탄검',1.20,'겔화 고분자','혼자서는 겔이 되지 않지만 로커스트빈검과 만나면 사슬끼리 맞물려 탄성 겔을 만듭니다.','typ'),I('Locust Bean Gum (Ceratonia Siliqua Gum)','로커스트빈검',0.80,'겔화 고분자','캐럽(구주콩) 씨앗의 갈락토만난입니다. 잔탄검·카라기난과 짝을 이루는 대표적인 하이드로겔 원료입니다.','pat','us8663664'),I('Tetrapeptide-21; Glycerin; Butylene Glycol; Aqua (TEGO Pep 4-17 MB)',null,5.00,'펩타이드 활성',null,null,null,'extract'),I('Hydrolyzed Hyaluronic Acid','가수분해하이알루로닉애씨드',0.10,'보습 고분자'),I('Sodium Anisate',null,0.20,'보존제'),I('Dye','색소',QS,'색소',null,null,null,'particle')]},
+  {k:'B',name:'오일',kind:'oil',items:[I('Adansonia Digitata Seed Oil','바오밥씨오일',5.00,'에몰리언트'),I('Glyceryl Caprylate','글리세릴카프릴레이트',0.30,'보존 보조·유화 보조')]},
+  {k:'C',name:'뜨거운 물',kind:'water',items:[I('Water','정제수',82.40,'용매','85 °C로 데워 넣어야 검이 완전히 풀립니다.','src','evonik_patch')]},
+  {k:'D',name:'pH 조정',kind:'ph',items:[I('Citric Acid (50% 용액)','시트릭애씨드',QS,'pH 조정','pH 5.0–5.5로 맞춥니다.','src','evonik_patch')]}
+ ],
+ steps:[
+  {t:'물 85 °C 가열',add:[],side:{label:'C상 정제수 85 °C',color:'#d6eef8',temp:85},temp:25,mixer:'none',rpm:0,time:'—',desc:'정제수를 별도 용기에서 85 °C로 가열합니다.',why:'다당류 검은 뜨거운 물에서 사슬이 풀려야 나중에 식을 때 고르게 다시 엉겨 붙습니다.',tag:'src',src:'evonik_patch',color:'#2a2f33',op:0,visc:0,micro:{bg:'water',mol:.05,scale:'≈ 1 µm'}},
+  {t:'검 슬러리 만들기',add:['A'],temp:25,mixer:'paddle',rpm:300,time:'—',desc:'본 탱크에 글리세린, 펩타이드, 보존제, 히알루론산, 잔탄검, 로커스트빈검을 넣고 섞어 걸쭉한 슬러리를 만듭니다.',why:'물이 아니라 글리세린에 검 가루를 먼저 흩어 두는 단계입니다. 가루가 하나씩 따로 적셔져 있어야 뜨거운 물을 부었을 때 뭉치지 않습니다.',tag:'src',src:'evonik_patch',color:'#ece6d2',op:.85,visc:.3,micro:{bg:'water',mol:.3,poly:1,expand:.1,pkind:'xanthan',scale:'≈ 1 µm'}},
+  {t:'오일 투입',add:['B'],temp:25,mixer:'paddle',rpm:400,time:'—',desc:'바오밥씨오일과 글리세릴카프릴레이트를 넣고 잘 섞습니다.',why:'오일은 슬러리 속에 작은 방울로 퍼집니다. 겔이 굳으면 방울이 그 자리에 갇혀, 붙이고 있는 동안 조금씩 피부에 닿습니다.',tag:'src',src:'evonik_patch',color:'#efe6cc',op:.88,visc:.3,micro:{bg:'water',mol:.3,poly:1,expand:.1,pkind:'xanthan',drop:.45,dr:.4,scale:'≈ 1 µm'}},
+  {t:'뜨거운 물 투입 → 검 수화',add:['C'],temp:80,mixer:'paddle',rpm:500,time:'균일해질 때까지',desc:'85 °C 물을 넣고 균일해질 때까지 섞습니다.',why:'뜨거운 물속에서 잔탄검과 로커스트빈검 사슬이 물을 머금고 펴집니다. 아직 뜨거워서 겔이 아니라 흐르는 액체 상태입니다.',tag:'src',src:'evonik_patch',color:'#eef0ee',op:.7,visc:.25,micro:{bg:'water',mol:.3,poly:1,expand:.75,pkind:'xanthan',drop:.45,dr:.35,scale:'≈ 1 µm'}},
+  {t:'pH 5.0–5.5 · 균질',add:['D'],temp:80,mixer:'homo',rpm:3000,time:'균일해질 때까지',ph:'5.0–5.5',desc:'구연산 용액으로 pH를 맞추고 균질합니다.',why:'오일 방울을 잘게 하고 겔 원료를 고르게 풀어, 굳었을 때 시트 전체의 강도가 같아지게 합니다.',tag:'src',src:'evonik_patch',color:'#eef1f3',op:.72,visc:.25,micro:{bg:'water',mol:.3,poly:1,expand:.8,pkind:'xanthan',drop:.45,dr:.25,scale:'≈ 1 µm'}},
+  {t:'80 °C에서 틀에 붓기',add:[],cast:1,temp:80,mixer:'none',rpm:0,time:'—',desc:'80 °C를 유지한 채 패치 모양 틀에 붓거나 평판으로 눌러 펼칩니다.',why:'온도가 떨어지면 탱크 안에서 굳어 버리므로 뜨거울 때 성형합니다. 마스크용은 필름 위에 펴 바르고 부직포나 메쉬를 지지체로 덧대는 방식도 씁니다.',tag:'src',src:'evonik_patch',color:'#eef1f3',op:.72,visc:.25,micro:{bg:'water',mol:.3,poly:1,expand:.8,pkind:'xanthan',drop:.45,dr:.25,scale:'≈ 1 µm'}},
+  {t:'상온 냉각 → 겔화',add:[],cast:2,temp:25,mixer:'none',rpm:0,time:'—',desc:'틀째로 상온까지 식힙니다.',why:'식으면서 잔탄검과 로커스트빈검 사슬이 군데군데 맞물려 3차원 그물이 되고, 물과 에센스를 가둔 탄성 시트가 됩니다. 다시 데우면 풀리는 열가역성 겔입니다.',tag:'typ',color:'#eef1f3',op:.72,visc:1,micro:{bg:'water',mol:.3,poly:1,expand:1,pkind:'xanthan',drop:.45,dr:.25,scale:'≈ 1 µm'}},
+  {t:'재단·포장',add:[],cast:3,temp:25,mixer:'none',rpm:0,time:'—',desc:'굳은 시트를 패치나 마스크 모양으로 따내 포장합니다.',why:'원 처방에는 이 단계가 없습니다. 특허 예시는 필름 위에 붓고 이형지를 덮어 식힌 뒤, 이어진 시트를 마스크 모양으로 다이커팅했습니다.',tag:'pat',src:'us7470726',color:'#eef1f3',op:.72,visc:1,micro:{bg:'water',mol:.3,poly:1,expand:1,pkind:'xanthan',drop:.45,dr:.25,scale:'≈ 1 µm'}}
+ ],
+ design:[['하이드로겔의 몸체는 다당류 그물입니다. 이 처방은 잔탄검 1.2% + 로커스트빈검 0.8%, 합 2%만으로 시트를 세웁니다.','calc'],['특허는 겔화 고분자를 0.2–6 wt%로 제시하고, 범위를 벗어나면 형태 유지·탄성·밀착이 나빠진다고 설명합니다. 폴리올은 0.5–20 wt%로, 적으면 유연성이 없고 많으면 끈적입니다.','pat','us10011712'],['로커스트빈검 + 카라기난 하이드로겔이 30–50 °C에서 흐르는 상태로 바뀌도록 설계한 특허도 있습니다. 붙이고 있으면 체온에 녹듯 밀착되는 사용감을 설명하는 한 방식입니다.','pat','us8663664'],['겔 강도와 탄성은 유변 측정(G′, G″)과 인장 시험으로 평가합니다. 다당류 조합과 비율이 곧 사용감입니다.','typ']],
+ market:{name:'Biodance Bio-Collagen Real Deep Mask',src:'biodance_inci',use:'biodance_use',
+  inci:['Water','Collagen Extract','Galactomyces Ferment Filtrate','Glycerin','Acrylates Copolymer','Niacinamide','Ceratonia Siliqua (Carob) Gum','Chondrus Crispus Extract','Betaine','Algin','Dipropylene Glycol','Agar','Hydroxyacetophenone','1,2-Hexanediol'],
+  gel:['Acrylates Copolymer','Ceratonia Siliqua (Carob) Gum','Chondrus Crispus Extract','Algin','Agar'],
+  notes:[['겔을 만드는 원료가 5종입니다. 로커스트빈검(Ceratonia Siliqua Gum), 카라기난을 얻는 홍조류 추출물(Chondrus Crispus Extract), 알긴, 한천에 합성 고분자(Acrylates Copolymer)까지 섞었습니다. 이 탭의 처방(잔탄검 + 로커스트빈검 2종)보다 훨씬 복합적입니다.','inci'],['판매처는 쓰는 동안 피부가 에센스를 흡수하면서 마스크가 점점 투명해진다고 설명하며, 3–4시간 또는 밤새 붙이라고 안내합니다.','qa','biodance_use'],['각 성분의 함량은 공개되지 않았습니다. 위 해석은 전성분 순서에 근거한 추정입니다.','typ']]}
+},
+{id:'gelcream',name:'젤크림',en:'Gel-Cream',struct:'고분자 유화 젤',container:'jar',
+ look:{color:0xeef4f6,opacity:.78},
+ summary:'카보머 젤 속에 소량의 오일 방울을 고분자 유화제로 붙잡아 띄운 제형입니다. 이 예시는 가열 없이 상온에서 만듭니다.',
+ props:[['구조','카보머 젤 + 고분자 유화제로 고정한 미세 오일 방울','typ'],['유상','약 3.5% (+활성 원료 3%)','calc'],['공정','상온, 팽윤 1시간 ×2, 중화','src','croda_gc'],['교반','헬릭스 300 rpm → 블레이드 500 rpm','src','croda_gc']],
+ fsrc:'croda_gc',fnote:'Croda(Sederma) 공개 처방 원문 함량입니다. 정제수는 나머지 합으로 계산했습니다. Wonderlight™는 원문에 INCI가 없습니다.',
+ phases:[
+  {k:'A',name:'수상·카보머',kind:'water',items:[I('Water','정제수',{to:84.9},'용매'),I('Carbomer','카보머',0.25,'겔화제','물에 흩뿌린 뒤 1시간 팽윤시킵니다. 중화 전까지는 묽습니다.','src','croda_gc')]},
+  {k:'B',name:'글라이콜·보존',kind:'active',items:[I('Butylene Glycol','부틸렌글라이콜',3.00,'보습제'),I('Phenoxyethanol','페녹시에탄올',QS,'보존제','국내 최대 1%.','reg','kcia_pe')]},
+  {k:'C',name:'유상 + 고분자 유화제',kind:'oil',items:[I('Polysorbate 20','폴리소베이트20',0.50,'보조 유화제'),I('Cyclopentasiloxane','사이클로펜타실록산',1.00,'실리콘 오일','EU는 리브온 제품의 D5를 2027년 6월 6일부터 0.1% 미만으로 제한합니다. 수출 처방이라면 대체 오일이 필요합니다.','reg','d5'),I('Cetearyl Ethylhexanoate',null,2.00,'에몰리언트'),I('Wonderlight™ (활성 원료, INCI 미기재)',null,3.00,'미백 활성'),I('PPG-3 Benzyl Ether Myristate',null,0.50,'에몰리언트'),I('Acrylates/C10-30 Alkyl Acrylate Crosspolymer (Pemulen TR2)',null,0.20,'고분자 유화제','친수성 고분자 사슬에 긴 소수성 꼬리가 붙어 있어, 꼬리는 오일 방울에 박히고 사슬은 물 쪽 젤 네트워크와 이어집니다. 계면활성제를 적게 쓰고도 방울을 고정합니다.','typ')]},
+  {k:'D',name:'보존 보조',kind:'cool',items:[I('Potassium Sorbate','포타슘소르베이트',0.10,'보존제')]},
+  {k:'E',name:'중화',kind:'ph',items:[I('Water','정제수',4.00,'희석수'),I('Sodium Hydroxide (30% 용액)','소듐하이드록사이드',0.45,'중화제')]},
+  {k:'F',name:'향',kind:'cool',items:[I('Fragrance','향료',0.10,'향')]}
+ ],
+ steps:[
+  {t:'카보머 분산·팽윤 1시간',add:['A'],temp:25,mixer:'helix',rpm:300,time:'1 h',desc:'물에 카보머를 흩뿌리고 헬릭스 교반 300 rpm으로 1시간 팽윤시킵니다.',why:'카보머가 충분히 물을 머금어야 나중에 중화했을 때 고르게 부풉니다. 이 단계는 아직 묽습니다.',tag:'src',src:'croda_gc',color:'#e2eef0',op:.3,visc:.05,micro:{bg:'water',mol:.1,poly:1,expand:.25,pkind:'carbomer',scale:'≈ 10 µm'}},
+  {t:'B상 투입·균질',add:['B'],temp:25,mixer:'homo',rpm:3000,time:'짧게',desc:'BG와 보존제를 섞어 넣고 균질합니다.',why:'중화 전이라 고전단을 써도 고분자가 손상되지 않습니다.',tag:'src',src:'croda_gc',color:'#e2eef0',op:.3,visc:.06,micro:{bg:'water',mol:.35,poly:1,expand:.25,pkind:'carbomer',scale:'≈ 10 µm'}},
+  {t:'유상(+고분자 유화제) 투입',add:['C'],side:{label:'C상 유상',color:'#f3dfa8',temp:25},temp:25,mixer:'helix',rpm:300,time:'—',desc:'오일과 폴리소베이트20, Pemulen TR2를 미리 섞어 헬릭스 300 rpm에서 넣습니다.',why:'Pemulen의 소수성 꼬리가 오일 방울 표면에 박히며 방울을 붙잡습니다. 유상이 3.5% 정도로 적어 가열 없이도 유화됩니다.',tag:'typ',color:'#eef3f2',op:.6,visc:.1,micro:{bg:'water',mol:.35,poly:1,expand:.25,pkind:'carbomer',drop:.55,dr:.25,scale:'≈ 10 µm'}},
+  {t:'D상 투입·팽윤 1시간',add:['D'],temp:25,mixer:'helix',rpm:300,time:'1 h',desc:'포타슘소르베이트를 넣고 다시 1시간 팽윤시킵니다.',why:'고분자 유화제까지 충분히 수화되어야 중화 후 구조가 고르게 잡힙니다.',tag:'src',src:'croda_gc',color:'#eef3f2',op:.62,visc:.12,micro:{bg:'water',mol:.4,poly:1,expand:.35,pkind:'carbomer',drop:.55,dr:.25,scale:'≈ 10 µm'}},
+  {t:'중화 → 젤크림',add:['E'],temp:25,mixer:'blade',rpm:500,time:'—',ph:'중성 부근',desc:'희석한 수산화나트륨으로 중화합니다. 블레이드 500 rpm.',why:'카보머와 Pemulen이 함께 부풀며 젤 네트워크가 오일 방울을 제자리에 가둡니다. 바를 때 젤이 무너지며 물기가 터지는 듯한 가벼운 사용감이 납니다.',tag:'typ',color:'#eff5f6',op:.78,visc:.75,micro:{bg:'water',mol:.4,poly:1,expand:1,pkind:'carbomer',drop:.55,dr:.25,scale:'≈ 10 µm'}},
+  {t:'향 투입·1시간 교반',add:['F'],temp:25,mixer:'blade',rpm:500,time:'≥ 1 h',desc:'향을 넣고 블레이드 500 rpm으로 1시간 이상 섞습니다.',why:'원 처방의 마지막 단계입니다. 중화 후라 고전단 대신 중간 속도로 오래 섞습니다.',tag:'src',src:'croda_gc',color:'#eef4f6',op:.78,visc:.75,micro:{bg:'water',mol:.45,poly:1,expand:1,pkind:'carbomer',drop:.55,dr:.25,scale:'≈ 10 µm'}}
+ ],
+ design:[['젤크림은 "유화제 크림"이 아니라 "오일을 품은 젤"에 가깝습니다. 구조를 잡는 주체가 고분자 네트워크입니다.','typ'],['유상을 24%까지 올린 크림-젤도 고분자 0.7%만으로 상온에서 만든 공개 처방이 있습니다(Clariant, Aristoflex HMB).','src','clariant_gc'],['이 처방의 D5(사이클로펜타실록산)는 EU 리브온 규제 대상입니다(2027-06-06부터 0.1% 미만).','reg','d5']]
+},
+{id:'lotion',name:'로션',en:'Lotion',struct:'O/W 에멀전 (저점도)',container:'pump',
+ look:{color:0xf6f4ef,opacity:.94},
+ summary:'물속에 오일 방울이 퍼진 O/W 에멀전입니다. 고형 지방 성분이 적고 액상 오일 위주라 흐르는 점도가 납니다.',
+ props:[['구조','O/W 에멀전 + 카보머 0.2%','typ'],['유상','17% (고형 왁스류는 1%)','calc'],['공정','가열 유화 약 80 °C','src','ev_lotion'],['특이점','40 °C 아래에서 중화·알코올 투입','src','ev_lotion']],
+ fsrc:'ev_lotion',fnote:'Evonik 공개 처방 원문 함량입니다(A 17% + B 78% + D 5% = 100%). E상(보존제·향)의 종류와 투입 시점은 원문에 없습니다.',
+ phases:[
+  {k:'A',name:'유상',kind:'oil',items:[I('Glyceryl Stearate','글리세릴스테아레이트',0.50,'보조 유화·안정화'),I('Stearic Acid','스테아릭애씨드',0.50,'보조 안정화'),I('Ethylhexyl Palmitate',null,5.00,'에몰리언트'),I('Isopropyl Palmitate',null,6.00,'에몰리언트'),I('Decyl Cocoate',null,3.00,'에몰리언트'),I('Cetyl Ricinoleate',null,2.00,'에몰리언트')]},
+  {k:'B',name:'수상 (유화제·카보머 포함)',kind:'water',items:[I('Water','정제수',74.30,'용매'),I('Cetearyl Glucoside','세테아릴글루코사이드',1.00,'O/W 유화제','당 기반 비이온 유화제로 수상에 넣어 함께 가열합니다.','src','ev_lotion'),I('Carbomer','카보머',0.20,'점증·안정화','가열한 수상에서 균질기로 풀고, 냉각 후 중화합니다. 연속상(물) 점도를 올려 오일 방울이 떠오르는 것을 늦춥니다.','src','ev_lotion'),I('Glycerin','글리세린',2.00,'보습제'),I('Panthenol','판테놀',0.50,'보습·진정')]},
+  {k:'C',name:'중화',kind:'ph',items:[I('Sodium Hydroxide (10% 용액)','소듐하이드록사이드',QS,'중화제')]},
+  {k:'D',name:'알코올',kind:'cool',items:[I('Alcohol','알코올',5.00,'산뜻한 사용감','휘발성이라 냉각 후(40 °C 아래) 넣습니다.','src','ev_lotion')]},
+  {k:'E',name:'보존제·향',kind:'cool',items:[I('Preservative, Perfume','보존제·향료',QS,'보존·향','원문에 종류와 시점이 없습니다. 통상 40 °C 아래에서 넣습니다.','typ')]}
+ ],
+ steps:[
+  {t:'수상 가열·카보머 용해',add:['B'],temp:80,mixer:'homo',rpm:3000,time:'용해까지',desc:'B상을 약 80 °C로 가열하고 균질기로 카보머를 풉니다.',why:'중화 전 카보머는 묽어서 고전단을 써도 됩니다. 유화 전에 연속상을 준비해 두는 단계입니다.',tag:'src',src:'ev_lotion',color:'#dceef6',op:.28,visc:.05,micro:{bg:'water',mol:.3,poly:.6,expand:.25,pkind:'carbomer',scale:'≈ 10 µm'}},
+  {t:'유상 가열',add:[],side:{label:'A상 유상 80 °C',color:'#f3d48f',temp:80},temp:80,mixer:'paddle',rpm:200,time:'—',desc:'A상을 별도 용기에서 약 80 °C로 가열해 고형분을 녹입니다.',why:'두 상의 온도를 맞춰야 섞는 순간 고형 지방이 굳지 않고 고르게 유화됩니다.',tag:'src',src:'ev_lotion',color:'#dceef6',op:.28,visc:.05,micro:{bg:'water',mol:.3,poly:.6,expand:.25,pkind:'carbomer',scale:'≈ 10 µm'}},
+  {t:'유상 → 수상 투입 (유화)',add:['A'],temp:80,mixer:'paddle',rpm:600,time:'—',desc:'교반하면서 A상을 B상에 넣습니다.',why:'물이 연속상이고 오일이 방울이 되는 O/W 구조가 만들어집니다. 이 시점의 방울은 크고 고르지 않습니다.',tag:'src',src:'ev_lotion',color:'#f3f1ea',op:.85,visc:.1,micro:{bg:'water',mol:.3,poly:.6,expand:.25,pkind:'carbomer',drop:1,dr:.85,scale:'≈ 10 µm'}},
+  {t:'균질',add:[],temp:80,mixer:'homo',rpm:4000,time:'수 분',desc:'호모믹서로 균질해 방울을 잘게 쪼갭니다.',why:'방울이 작고 고를수록 떠오르거나 합쳐지기 어려워 안정해집니다.',tag:'typ',color:'#f6f4ef',op:.93,visc:.15,micro:{bg:'water',mol:.3,poly:.6,expand:.25,pkind:'carbomer',drop:1,dr:.4,scale:'≈ 10 µm'}},
+  {t:'서서히 냉각',add:[],temp:40,mixer:'paddle',rpm:150,time:'—',desc:'천천히 저으며 식힙니다.',why:'식으면서 글리세릴스테아레이트와 스테아릭애씨드가 방울 둘레에서 굳어 구조를 보탭니다. 고형분이 1%뿐이라 점도는 낮게 유지됩니다.',tag:'typ',color:'#f6f4ef',op:.93,visc:.2,micro:{bg:'water',mol:.3,poly:.6,expand:.25,pkind:'carbomer',drop:1,dr:.4,lam:.25,scale:'≈ 10 µm'}},
+  {t:'40 °C 아래: 중화·알코올',add:['C','D'],temp:38,mixer:'paddle',rpm:150,time:'—',ph:'중화',desc:'수산화나트륨으로 카보머를 중화하고 알코올을 넣습니다.',why:'중화로 카보머가 부풀어 연속상 점도가 오릅니다. 알코올은 휘발성이라 반드시 식힌 뒤 넣습니다.',tag:'src',src:'ev_lotion',color:'#f6f4ef',op:.94,visc:.4,micro:{bg:'water',mol:.35,poly:.6,expand:1,pkind:'carbomer',drop:1,dr:.4,lam:.25,scale:'≈ 10 µm'}},
+  {t:'보존제·향',add:['E'],temp:30,mixer:'paddle',rpm:150,time:'—',desc:'보존제와 향을 넣고 상온까지 식힙니다.',why:'원문에 시점이 없어 통상의 "40 °C 아래 투입" 원칙을 적용했습니다.',tag:'typ',color:'#f6f4ef',op:.94,visc:.4,micro:{bg:'water',mol:.4,poly:.6,expand:1,pkind:'carbomer',drop:1,dr:.4,lam:.25,scale:'≈ 10 µm'}}
+ ],
+ design:[['로션과 크림을 가르는 것은 유상의 양보다 고형 지방(왁스, 지방알코올, 글리세릴스테아레이트)의 양입니다. 이 로션은 1%, 다음 탭의 크림은 3%입니다.','calc'],['점도가 낮은 에멀전은 방울이 떠오르기 쉬워, 카보머 0.2%로 연속상을 받쳐 줍니다.','typ'],['열에 약하거나 휘발하는 원료(알코올, 향, 보존제)는 40 °C 아래에서 넣습니다.','src','ev_lotion']]
+},
+{id:'cream',name:'크림',en:'Cream',struct:'O/W 에멀전 + 라멜라 겔',container:'jar',
+ look:{color:0xf7f5f0,opacity:1},
+ summary:'로션과 같은 O/W 구조에 고형 지방 성분을 더해, 식는 동안 방울 사이에 층상(라멜라) 겔 네트워크가 생기며 퍼지지 않는 크림이 됩니다.',
+ props:[['구조','O/W 에멀전 + 지방알코올·유화제 라멜라 겔','typ'],['유상','25% (유화제·고형분 6% 포함)','calc'],['공정','가열 유화 70–75 °C','src','ev_cream'],['균질 조건 연구','70 °C, 5분, 4,000 rpm에서 가장 안정','lit','cosmax']],
+ fsrc:'ev_cream',fnote:'Evonik 공개 처방 원문 함량입니다(합계 100%). 균질 속도 비교는 코스맥스 R&I 논문의 실험 결과입니다.',
+ phases:[
+  {k:'A',name:'유상 (유화제·고형분 포함)',kind:'oil',items:[I('Polyglyceryl-3 Methylglucose Distearate',null,3.00,'O/W 유화제','PEG가 없는 비이온 유화제입니다.','typ'),I('Glyceryl Stearate','글리세릴스테아레이트',2.00,'유화 안정화','지방알코올과 함께 식으면서 층상 겔 구조를 만듭니다.','typ'),I('Stearyl Alcohol','스테아릴알코올',1.00,'유화 안정화·점증'),I('Ethylhexyl Stearate',null,10.00,'에몰리언트'),I('Decyl Oleate',null,9.00,'에몰리언트')]},
+  {k:'B',name:'수상',kind:'water',items:[I('Glycerin','글리세린',3.00,'보습제'),I('Water','정제수',71.00,'용매')]},
+  {k:'C',name:'냉각상',kind:'cool',items:[I('Fragrance','향료',QS,'향'),I('Phenoxyethanol (and) Ethylhexylglycerin','페녹시에탄올·에틸헥실글리세린',1.00,'보존제','블렌드 1% 안에 페녹시에탄올이 들어 있습니다. 국내 페녹시에탄올 상한은 1%입니다.','reg','kcia_pe')]}
+ ],
+ steps:[
+  {t:'수상 가열',add:['B'],temp:75,mixer:'paddle',rpm:200,time:'—',desc:'정제수와 글리세린을 70–75 °C로 가열합니다.',why:'유상과 온도를 맞추기 위해서입니다.',tag:'src',src:'ev_cream',color:'#dceef6',op:.25,visc:0,micro:{bg:'water',mol:.25,scale:'≈ 10 µm'}},
+  {t:'유상 가열',add:[],side:{label:'A상 유상 75 °C',color:'#f3d48f',temp:75},temp:75,mixer:'paddle',rpm:200,time:'—',desc:'유화제, 글리세릴스테아레이트, 스테아릴알코올, 오일을 70–75 °C로 녹입니다.',why:'고형 지방은 녹는점 위에서만 고르게 섞입니다.',tag:'src',src:'ev_cream',color:'#dceef6',op:.25,visc:0,micro:{bg:'water',mol:.25,scale:'≈ 10 µm'}},
+  {t:'유상 → 수상 투입',add:['A'],temp:75,mixer:'paddle',rpm:600,time:'—',desc:'저으면서 A상을 B상에 넣습니다. A상이 먼저 탱크에 있다면 B상은 젓지 않고 넣으라고 원문은 적고 있습니다.',why:'넣는 방향과 교반에 따라 상이 뒤집혀(W/O) 버릴 수 있어서입니다.',tag:'src',src:'ev_cream',color:'#f3f1ea',op:.88,visc:.12,micro:{bg:'water',mol:.25,drop:1,dr:.9,scale:'≈ 10 µm'}},
+  {t:'균질 (속도 비교)',add:[],temp:70,mixer:'homo',rpm:4000,time:'5 min',rpmctl:true,desc:'호모믹서로 균질합니다. 오른쪽 위 버튼으로 속도를 바꾸고 1개월 뒤 모습을 비교해 보세요.',why:'코스맥스 R&I 연구는 수상 70 °C, 5분 유화 조건에서 2,000·4,000·8,000 rpm을 비교했습니다. 4,000 rpm에서 방울이 가장 곱고 고르게 나왔고, 2,000·4,000 rpm은 1개월 뒤에도 방울 모양과 분포가 유지됐지만 8,000 rpm은 1개월 뒤 방울이 합쳐지거나 엉겼습니다. 세게 돌릴수록 좋은 것이 아닙니다.',tag:'lit',src:'cosmax',color:'#f7f5f0',op:.98,visc:.25,micro:{bg:'water',mol:.25,drop:1,dr:.38,scale:'≈ 10 µm'}},
+  {t:'서서히 냉각 → 구조 형성',add:[],temp:40,mixer:'anchor',rpm:60,time:'—',desc:'천천히 저으며 식힙니다.',why:'식는 동안 글리세릴스테아레이트와 스테아릴알코올이 유화제와 함께 물을 머금은 층상(라멜라) 겔을 만들어, 방울 사이를 채우며 점도를 크게 올립니다. 냉각 속도와 교반이 최종 경도를 좌우합니다.',tag:'typ',color:'#f7f5f0',op:1,visc:.75,micro:{bg:'water',mol:.25,drop:1,dr:.38,lam:1,scale:'≈ 10 µm'}},
+  {t:'40 °C 아래: 향·보존제',add:['C'],temp:35,mixer:'anchor',rpm:60,time:'—',desc:'향과 보존제를 넣고 부드럽게 섞습니다.',why:'열에 약하거나 휘발하는 원료를 지키기 위한 공통 원칙입니다.',tag:'src',src:'ev_cream',color:'#f7f5f0',op:1,visc:.75,micro:{bg:'water',mol:.3,drop:1,dr:.38,lam:1,scale:'≈ 10 µm'}}
+ ],
+ design:[['크림의 몸체는 오일 방울이 아니라 방울 사이의 라멜라 겔입니다. 지방알코올과 글리세릴스테아레이트를 1%씩만 바꿔도 경도가 크게 달라집니다.','typ'],['균질은 "더 세게"가 답이 아닙니다. 코스맥스 연구에서 8,000 rpm은 오히려 1개월 뒤 방울이 합쳐졌습니다.','lit','cosmax'],['같은 방식의 국내 연구도 수상·유상을 75 °C에서 호모믹서로 5분 유화했고, 교반 속도가 오를수록 방울은 작아지고 점도는 올랐습니다.','lit','dankook']]
+},
+{id:'sun',name:'선크림',en:'Mineral Sunscreen',struct:'W/O 에멀전 + 무기 분체',container:'tube',
+ look:{color:0xf4f4f2,opacity:1},
+ summary:'오일이 연속상인 W/O 에멀전 속에 이산화티타늄·산화아연 입자를 고르게 분산한 무기 자외선 차단제입니다. 분체 분산이 성능을 결정합니다.',
+ props:[['구조','W/O 에멀전, 오일 쪽에 무기 입자 분산','src','croda_sun'],['SPF (in vivo, 3명)','57.8','src','croda_sun'],['UVA-PF / 임계파장','17.9 / 374 nm','src','croda_sun'],['점도','4,315 cP','src','croda_sun'],['국내 최대 함량','징크옥사이드 25%, 티타늄디옥사이드 25%','reg','nifds']],
+ fsrc:'croda_sun',fnote:'Croda 공개 처방 원문 함량입니다. 정제수는 나머지 합(약 15.8%)입니다. 분산액 원료는 활성 성분 외 오일·분산제를 포함하므로, 실제 TiO₂·ZnO 함량은 원료 사양서로 환산해 규정과 비교해야 합니다.',
+ phases:[
+  {k:'A',name:'수상',kind:'water',items:[I('Water','정제수',{to:15.8},'용매'),I('Glycerin','글리세린',1.50,'보습제'),I('Magnesium Sulfate Heptahydrate','마그네슘설페이트',0.70,'W/O 안정화','원문 기능은 "salting out"입니다. 물방울 쪽 이온 강도를 높여 W/O 에멀전을 안정시키는 통상 기법입니다.','src','croda_sun')]},
+  {k:'B',name:'분체 (TiO₂)',kind:'powder',items:[I('Titanium Dioxide (and) Aluminum Stearate (and) Alumina','티타늄디옥사이드(코팅)',17.00,'무기 UVB 차단','표면을 코팅한 분말입니다. 오일에 적신 뒤 고전단으로 뭉친 입자를 풀어야 차단 효율이 납니다.','src','croda_sun')]},
+  {k:'C',name:'유상·W/O 유화제',kind:'oil',items:[I('Caprylic/Capric Triglyceride','카프릴릭/카프릭트리글리세라이드',7.00,'에몰리언트'),I('Isopropyl Isostearate',null,8.00,'에몰리언트'),I('Propylene Glycol Dicaprylate/Dicaprate',null,10.00,'에몰리언트'),I('Polyglyceryl-3 Diisostearate',null,3.00,'W/O 유화제')]},
+  {k:'D',name:'유화제·유변·분산제',kind:'emul',items:[I('PEG-30 Dipolyhydroxystearate',null,0.75,'W/O 유화제'),I('C12-15 Alkyl Benzoate (and) Stearalkonium Hectorite (and) Propylene Carbonate',null,0.75,'유변 조절제'),I('Polyhydroxystearic Acid',null,1.50,'분산제','입자 표면에 붙어 입자끼리 다시 뭉치지 않게 합니다.','typ')]},
+  {k:'E',name:'분산액·보존제',kind:'powder',items:[I('TiO₂ (and) Caprylic/Capric Triglyceride (and) PHSA (and) Stearic Acid (and) Alumina',null,10.00,'광범위 UV 차단 (분산액)'),I('Zinc Oxide (and) C12-15 Alkyl Benzoate (and) PHSA (and) Isostearic Acid',null,20.00,'UVA 차단 (분산액)'),I('Glyceryl Caprylate (and) Glyceryl Undecylenate',null,1.00,'보존제')]},
+  {k:'F',name:'감촉 분체',kind:'cool',items:[I('Silica','실리카',1.00,'감촉 개선'),I('Aluminum Starch Octenylsuccinate',null,2.00,'감촉 개선','전분은 40 °C 아래에서 넣어야 감촉 기능이 유지됩니다.','src','croda_sun')]}
+ ],
+ steps:[
+  {t:'수상 준비·가열',add:[],side:{label:'A상 수상 75–80 °C',color:'#d6eef8',temp:78},temp:25,mixer:'none',rpm:0,time:'—',desc:'물, 글리세린, 황산마그네슘을 섞어 75–80 °C로 가열해 둡니다.',why:'W/O에서는 물이 나중에 오일 속으로 들어가는 쪽이라 따로 준비합니다.',tag:'src',src:'croda_sun',color:'#2a2f33',op:0,visc:0,micro:{bg:'oil',scale:'≈ 1 µm'}},
+  {t:'분체 습윤',add:['B','C'],temp:25,mixer:'paddle',rpm:400,time:'10 min',desc:'TiO₂ 분말을 탱크에 넣고, 유상을 벽을 타고 천천히 부어 10분간 적십니다.',why:'분말 속 공기를 오일로 밀어내는 단계입니다. 먼지가 날리지 않게 벽을 타고 붓습니다.',tag:'src',src:'croda_sun',color:'#ece9e1',op:.95,visc:.35,micro:{bg:'oil',part:1,agg:1,scale:'≈ 1 µm'}},
+  {t:'안료 분산 (고전단)',add:[],temp:25,mixer:'homo',rpm:10000,time:'20–30 min',desc:'Ultra-Turrax 8,500–10,000 rpm으로 20–30분 분산합니다. 전단열 때문에 25 °C 수조에 담급니다.',why:'뭉친 입자(응집체)를 풀어야 자외선을 고르게 막고 백탁이 줄어듭니다. 슬라이드 두 장 사이에 한 방울을 펴서 분산 상태를 확인합니다.',tag:'src',src:'croda_sun',color:'#f1efea',op:.97,visc:.3,micro:{bg:'oil',part:1,agg:0,scale:'≈ 1 µm'}},
+  {t:'유화제·유변 조절제 투입, 가열',add:['D'],temp:78,mixer:'paddle',rpm:400,time:'—',desc:'D상을 넣고 균일해질 때까지 저으며 75–80 °C로 가열합니다.',why:'유변 조절제(헥토라이트)가 오일 연속상에 구조를 만들어 무거운 입자가 가라앉지 않게 합니다.',tag:'src',src:'croda_sun',color:'#f1efea',op:.97,visc:.35,micro:{bg:'oil',part:1,agg:0,scale:'≈ 1 µm'}},
+  {t:'60 °C에서 분산액·보존제 투입',add:['E'],temp:78,mixer:'paddle',rpm:400,time:'—',desc:'60 °C가 되면 TiO₂·ZnO 분산액과 보존제를 넣고, 다시 75–80 °C까지 가열합니다.',why:'미리 분산된 원료라 고전단 없이 섞기만 합니다.',tag:'src',src:'croda_sun',color:'#f3f2ee',op:1,visc:.4,micro:{bg:'oil',part:1.3,agg:0,scale:'≈ 1 µm'}},
+  {t:'W/O 유화',add:['A'],side:{label:'A상 수상 75–80 °C',color:'#d6eef8',temp:78},temp:78,mixer:'homo',rpm:10000,time:'1 min/100 g',desc:'75–80 °C에서 수상을 오일 쪽에 천천히 넣으며 빠르게 젓고, 10,000 rpm으로 100 g당 1분 균질합니다.',why:'물을 오일 속에 방울로 넣는 W/O 구조입니다. 오일이 피부에 연속된 막을 만들어 입자가 고르게 남고, 물에 잘 씻기지 않습니다.',tag:'src',src:'croda_sun',color:'#f4f4f2',op:1,visc:.6,micro:{bg:'oil',part:1.3,agg:0,drop:1,dr:.32,scale:'≈ 1 µm'}},
+  {t:'냉각·감촉 분체',add:['F'],temp:27,mixer:'homo',rpm:4000,time:'2 min',desc:'저으며 25 °C까지 식히고, 25–30 °C에서 실리카와 전분을 넣어 4,000 rpm으로 2분 균질합니다.',why:'전분은 40 °C 아래에서 넣어야 보송한 감촉 기능을 지킵니다.',tag:'src',src:'croda_sun',color:'#f4f4f2',op:1,visc:.65,micro:{bg:'oil',part:1.3,agg:0,drop:1,dr:.32,scale:'≈ 1 µm'}}
+ ],
+ design:[['무기 자외선 차단제는 W/O 에멀전이 일반적으로 권장됩니다. 오일 연속상이라 pH 걱정이 적고 내수성이 생깁니다.','qa','happi_zno'],['성능의 대부분은 "분산"에서 갈립니다. 같은 함량이라도 응집이 남으면 SPF가 떨어지고 백탁이 커집니다.','src','croda_sun'],['국내 최대 함량은 징크옥사이드·티타늄디옥사이드 각 25%입니다. 분산액 원료 %가 아니라 활성 성분 함량으로 따집니다.','reg','nifds']]
+},
+{id:'cleanser',name:'클렌징 폼',en:'Soap-based Foam',struct:'비누 결정 페이스트',container:'tube',
+ look:{color:0xf7f6f3,opacity:1},
+ summary:'녹인 지방산에 수산화칼륨을 넣어 그 자리에서 비누를 만들고(비누화), 식히면서 비누 결정이 자라 진주빛 페이스트가 됩니다.',
+ props:[['구조','칼륨 비누 결정 + 남은 지방산','typ'],['외관','흰 페이스트','src','nagase'],['pH','9.0–9.8','src','nagase'],['중화도','지방산의 약 78% (KOH 순분 100% 가정)','calc']],
+ fsrc:'nagase',fnote:'Nagase Viita 공개 처방 원문 함량입니다. D상 정제수는 나머지 합(약 19.8%)입니다. 원문에는 온도·시간이 없어, 공정 온도는 원료사 기술 Q&A의 통상 조건을 함께 표시했습니다.',
+ phases:[
+  {k:'A',name:'지방산',kind:'oil',items:[I('Lauric Acid','라우릭애씨드',2.00,'비누 원료 (C12)','짧은 사슬이라 거품이 빠르고 풍성합니다.','typ'),I('Myristic Acid','미리스틱애씨드',17.00,'비누 원료 (C14)','이 처방의 주 지방산입니다. 크리미하고 조밀한 거품을 냅니다.','typ'),I('Palmitic Acid','팔미틱애씨드',4.00,'비누 원료 (C16)'),I('Stearic Acid','스테아릭애씨드',4.00,'비누 원료 (C18)','긴 사슬 비누는 크래프트점이 높아 상온에서 결정을 만들어 페이스트의 몸체가 됩니다.','qa','msr_soap'),I('Palmamide DEA',null,3.00,'기포 보조')]},
+  {k:'B',name:'글라이콜',kind:'active',items:[I('Glycerin','글리세린',10.00,'보습·연화'),I('Butylene Glycol','부틸렌글라이콜',10.00,'보습·연화')]},
+  {k:'C',name:'보습 원료',kind:'water',items:[I('Maltooligosyl Glucoside (and) Hydrogenated Starch Hydrolysate (MG-60)',null,5.00,'보습','세안 후 당김을 줄이는 목적의 원료입니다.','src','nagase'),I('Water','정제수',10.00,'용매'),I('Tetrasodium EDTA','테트라소듐이디티에이',0.20,'킬레이트제')]},
+  {k:'D',name:'알칼리',kind:'ph',items:[I('Water','정제수',{to:19.8},'용매'),I('Potassium Hydroxide','포타슘하이드록사이드',5.00,'비누화 알칼리','지방산 0.114 mol에 KOH 0.089 mol로 약 78%만 중화합니다. 남은 지방산이 결정과 함께 진주 광택과 부드러운 사용감을 만듭니다.','calc')]},
+  {k:'E',name:'보조 계면활성제',kind:'surf',items:[I('Sodium Methyl Cocoyl Taurate','소듐메틸코코일타우레이트',10.00,'보조 세정·기포','비누 단독보다 거품 질을 바꾸고 세정력을 보탭니다.','typ')]}
+ ],
+ steps:[
+  {t:'지방산 용융',add:['A'],temp:78,mixer:'paddle',rpm:200,time:'—',desc:'지방산과 기포 보조제를 가열해 완전히 녹입니다.',why:'원문은 "녹을 때까지 가열"로만 적었고, 원료사 기술 Q&A는 75–80 °C를 제시합니다.',tag:'qa',src:'msr_soap',color:'#f1dfa6',op:.7,visc:.05,micro:{bg:'oil',scale:'≈ 1 µm'}},
+  {t:'KOH 투입 → 비누화',add:['D'],side:{label:'D상 KOH 수용액',color:'#e3eef5',temp:25},temp:78,mixer:'paddle',rpm:300,time:'15–20 min 유지',desc:'미리 녹인 KOH 수용액을 넣고 75–80 °C를 유지하며 저어 비누화를 마칩니다.',why:'지방산 + KOH → 지방산칼륨(비누) + 물. 이 반응이 끝나야 거품이 나고 pH가 안정됩니다. 반응이 진행되며 걸쭉해집니다.',tag:'qa',src:'msr_soap',color:'#f3efe2',op:.9,visc:.45,micro:{bg:'water',soap:1,scale:'≈ 1 µm'}},
+  {t:'글라이콜 투입',add:['B'],temp:75,mixer:'paddle',rpm:300,time:'—',desc:'글리세린과 BG를 넣고 고루 섞습니다.',why:'원문 순서는 B → C → E입니다. 다량의 폴리올이 페이스트를 부드럽게 하고 세안 후 보습을 보탭니다.',tag:'src',src:'nagase',color:'#f4f1e6',op:.92,visc:.4,micro:{bg:'water',soap:1,mol:.4,scale:'≈ 1 µm'}},
+  {t:'보습상 투입',add:['C'],temp:72,mixer:'paddle',rpm:300,time:'—',desc:'MG-60, 물, EDTA를 넣습니다.',why:'원문 순서를 따릅니다.',tag:'src',src:'nagase',color:'#f5f2e8',op:.93,visc:.4,micro:{bg:'water',soap:1,mol:.5,scale:'≈ 1 µm'}},
+  {t:'보조 계면활성제 투입',add:['E'],temp:70,mixer:'paddle',rpm:200,time:'—',desc:'소듐메틸코코일타우레이트를 넣고 고루 섞습니다.',why:'거품이 지나치게 일지 않도록 낮은 속도로 섞습니다.',tag:'typ',color:'#f6f4ec',op:.95,visc:.4,micro:{bg:'water',soap:1,mol:.55,scale:'≈ 1 µm'}},
+  {t:'냉각 → 비누 결정화',add:[],temp:30,mixer:'anchor',rpm:40,time:'1–2 °C/min',desc:'천천히 저으며 식힙니다. 식으면서 하얗고 진주빛인 페이스트가 됩니다.',why:'칼륨 비누가 식으면서 결정을 만들어 페이스트의 몸체와 진주 광택이 생깁니다. 포타슘라우레이트 결정화 연구에서는 1–2 °C/min 냉각이 세안 폼 제조에 적합했습니다.',tag:'lit',src:'chula',color:'#f7f6f3',op:1,visc:.85,micro:{bg:'water',soap:.5,mol:.5,cryst:1,scale:'≈ 1 µm'}}
+ ],
+ design:[['비누계 폼은 제조 중에 원료(비누)를 직접 만드는 유일한 제품군입니다. KOH 양이 곧 중화도이고, 중화도가 거품·경도·pH를 결정합니다.','calc'],['완성품 pH가 9.0–9.8로 알칼리성입니다. 비누계 세안제는 반복 사용 시 건조·당김이 생길 수 있어, 아미노산계 같은 저자극 계면활성제를 섞습니다.','qa','msr_soap_ph'],['상온에서 묽어지는 문제는 긴 사슬 지방산(스테아릭) 비율을 올려 잡습니다.','qa','msr_soap']]
+}
+];
+
+const COMMON=[
+ ['가열 유화는 수상과 유상을 각각 70–80 °C로 맞춘 뒤 섞습니다. 고형 지방이 녹은 상태에서 섞어야 고르게 유화됩니다.','src','ev_cream'],
+ ['향·보존제·열에 약한 원료는 40 °C 아래에서 넣습니다.','src','ev_cream'],
+ ['균질 속도는 방울 크기와 점도를 바꾸지만, 너무 세면 오히려 장기 안정성이 떨어질 수 있습니다.','lit','cosmax'],
+ ['카보머 같은 아크릴계 고분자는 중화 전에는 묽고, 중화 후에는 고전단에 약합니다.','qa','msr_carb'],
+ ['다당류·고분자 가루는 글리세린이나 글라이콜에 먼저 적셔 넣어야 뭉치지 않습니다.','src','fb_serum']
+];
+
+PRODUCTS.forEach(p=>{p.phases.forEach(ph=>{ph.color=KIND[ph.kind].c;});});
+
+/* ═════════════ 유틸 ═════════════ */
+const pnum=it=> typeof it.pct==='number'?it.pct:(it.pct===QS?0.3:(it.pct&&it.pct.to)||0);
+const plab=it=> it.range?'~'+it.range:(typeof it.pct==='number'?fmt(it.pct):(it.pct===QS?'q.s.':'to 100'));
+function fmt(n){return n.toFixed(2);}
+function fmt1(n){return n.toFixed(1);}
+function phaseTotal(ph){return ph.items.reduce((s,i)=>s+pnum(i),0);}
+const hexToRgb=h=>{h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+
+let cur=PRODUCTS[0], sel=null; // sel = {pi, ii}
+let mode='3d';
+
+/* ═════════════ 탭 ═════════════ */
+const tabs=document.getElementById('tabs');
+let CUSTOM_DB=[], CUSTOM_LOCAL=[], CUSTOM_SESSION=[], sampleFn=null, dbApi=null, isOwner=false, canSave=false;
+const CUSTOM=()=>CUSTOM_DB.concat(CUSTOM_LOCAL,CUSTOM_SESSION);
+const ALL=()=>PRODUCTS.concat(CUSTOM());
+function renderTabs(){
+  tabs.innerHTML='';
+  const mk=(p,custom)=>{const b=document.createElement('button');b.innerHTML='<b>'+esc(p.name)+'</b><span>'+esc(custom?'내 분석 · '+p.struct:p.struct)+'</span>';b.onclick=()=>setProduct(p.id);b.dataset.id=p.id;if(custom)b.classList.add('custom');if(cur&&cur.id===p.id)b.classList.add('on');tabs.appendChild(b);};
+  PRODUCTS.forEach(p=>mk(p,false));
+  {const s=document.createElement('span');s.className='tabsep';tabs.appendChild(s);}
+  CUSTOM().forEach(p=>mk(p,true));
+  {const a=document.createElement('button');a.className='addtab';a.innerHTML='<b>+ 제품 추가</b><span>자료로 분해도 만들기</span>';a.onclick=()=>openAdd();tabs.appendChild(a);}
+}
+
+/* ═════════════ 패널 ═════════════ */
+function renderPanel(){
+  const p=cur;
+  document.getElementById('phead').innerHTML='<p class="ph">'+esc(p.name)+'<small>'+esc(p.en||'')+'</small></p><span class="structchip">'+esc(p.struct)+'</span><p>'+esc(p.summary)+'</p><table class="kv">'+p.props.map(r=>'<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+chip(r[2],r[3],r[4])+'</td></tr>').join('')+'</table>'+(p.custom?customBox(p):'');
+  if(p.custom) bindCustomBox(p);
+  let h='<table><tr><th>원료 (INCI)</th><th style="text-align:right">%</th><th>기능</th></tr>';
+  p.phases.forEach((ph,pi)=>{
+    h+='<tr class="phrow"><td colspan="3"><span class="sw" style="background:'+ph.color+'"></span>'+ph.k+'상 · '+esc(ph.name)+' <span style="font-family:var(--f-mono);color:var(--muted);font-weight:500">≈ '+fmt1(phaseTotal(ph))+'%</span></td></tr>';
+    ph.items.forEach((it,ii)=>{
+      const s=sel&&sel.pi===pi&&sel.ii===ii;
+      h+='<tr class="ing'+(s?' sel':'')+'" tabindex="0" data-pi="'+pi+'" data-ii="'+ii+'"><td class="inci">'+esc(it.inci)+(it.ko?'<span class="ko">'+esc(it.ko)+'</span>':'')+'</td><td class="num">'+plab(it)+'</td><td class="fn">'+esc(it.fn)+'</td></tr>';
+    });
+  });
+  h+='</table>';
+  const pf=document.getElementById('pform'); pf.innerHTML=h;
+  pf.querySelectorAll('tr.ing').forEach(tr=>{const go=()=>select(+tr.dataset.pi,+tr.dataset.ii);tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
+  document.getElementById('pfnote').innerHTML=esc(p.fnote||'')+(p.fsrc?chip('src',p.fsrc):'');
+  document.getElementById('pdesign').innerHTML=p.design.map(d=>'<li>'+esc(d[0])+chip(d[1],d[2],d[3])+'</li>').join('');
+  const mk=document.getElementById('pmarket');
+  if(p.market){const m=p.market;mk.hidden=false;mk.innerHTML='<h2>시판 제품 비교</h2><p><b>'+esc(m.name)+'</b> 전성분 앞쪽 '+m.inci.length+'개'+chip('inci',m.src)+'</p><ol style="margin:0;padding-left:20px;columns:2;column-gap:18px">'+m.inci.map(x=>'<li'+(m.gel.includes(x)?' class="gel"':'')+'>'+esc(x)+'</li>').join('')+'</ol><p class="small">초록색 = 겔(시트)을 만드는 원료</p><ul class="pts">'+m.notes.map(n=>'<li>'+esc(n[0])+chip(n[1],n[2]||m.src)+'</li>').join('')+'</ul>';}
+  else{mk.hidden=true;mk.innerHTML='';}
+  const ps=document.getElementById('psteps'); ps.innerHTML=p.steps.map((s,i)=>'<li data-i="'+i+'" tabindex="0">'+esc(s.t)+' <span style="font-family:var(--f-mono);color:var(--muted);font-size:12px">'+(s.temp?s.temp+' °C':'')+(s.rpm?' · '+s.rpm.toLocaleString()+' rpm':'')+'</span></li>').join('');
+  ps.querySelectorAll('li').forEach(li=>{li.onclick=()=>{setMode('proc');gotoStep(+li.dataset.i);};});
+  document.getElementById('pcommon').innerHTML=COMMON.map(d=>'<li>'+esc(d[0])+chip(d[1],d[2])+'</li>').join('');
+  const keys=new Set(p.fsrc?[p.fsrc]:[]); if(p.market){keys.add(p.market.src);keys.add(p.market.use);} if(p.srcList) p.srcList.forEach(s=>keys.add(s.key)); p.props.forEach(r=>r[3]&&keys.add(r[3])); p.design.forEach(d=>d[2]&&keys.add(d[2])); p.steps.forEach(s=>s.src&&keys.add(s.src)); p.phases.forEach(ph=>ph.items.forEach(it=>it.src&&keys.add(it.src)));
+  document.getElementById('psrc').innerHTML=[...keys].filter(k=>SRC[k]).map(k=>'<li>'+(SRC[k].u?'<a href="'+esc(SRC[k].u)+'" target="_blank" rel="noopener">'+esc(SRC[k].t)+'</a>':esc(SRC[k].t))+'</li>').join('');
+  renderSel();
+}
+function renderSel(){
+  const el=document.getElementById('psel');
+  if(!sel){el.innerHTML='<h2>선택한 원료</h2><p class="empty">3D 조각이나 처방표의 원료를 누르면 역할, 함량의 의미, 규정을 여기에 보여 줍니다.</p>';return;}
+  const ph=cur.phases[sel.pi], it=ph.items[sel.ii];
+  const share=pnum(it);
+  el.innerHTML='<h2>선택한 원료</h2><div class="selcard"><span style="font-size:11px;color:var(--muted)"><span class="sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+ph.color+';margin-right:5px"></span>'+ph.k+'상 · '+esc(ph.name)+'</span><h3>'+esc(it.inci)+'</h3>'+(it.ko?'<span class="ko" style="font-size:12px">'+esc(it.ko)+'</span>':'')+
+  '<div><span class="pct">'+plab(it)+(typeof it.pct==='number'?' %':'')+'</span>'+(it.pct&&it.pct.to?' <span class="note">(≈ '+fmt(it.pct.to)+'%)</span>':'')+(it.range?' <span class="note">추정 범위</span>':'')+(cur.custom&&it.tag?chip(it.tag,it.src,it.quote):'')+'</div><div class="fn"><b>기능</b> · '+esc(it.fn)+'</div><div class="small">3D 표현 · '+esc(FORM[formOf(it,ph)].n)+' ('+esc(FORM[formOf(it,ph)].d)+')</div>'+(it.note?'<p style="font-size:13px">'+esc(it.note)+(cur.custom?'':chip(it.tag,it.src))+'</p>':'')+
+  (it.quote?'<p class="quote">“'+esc(it.quote)+'”<br><span>'+esc((SRC[it.src]||{}).t||'')+'</span></p>':'')+(it.downgraded?'<p class="small">Claude가 문서 근거라고 했지만 인용 구절이 입력 본문에서 확인되지 않아 추정으로 바꿨습니다.</p>':'')+'</div>';
+}
+function select(pi,ii){
+  sel=(pi==null)?null:{pi,ii}; renderPanel(); paint3d();
+  const tr=document.querySelector('tr.ing.sel'); if(tr&&mode==='3d') tr.scrollIntoView({block:'nearest'});
+}
+
+/* ═════════════ 3D ═════════════ */
+const has3=!!window.THREE;
+if(!has3) document.getElementById('err').style.display='flex';
+let renderer,scene,camera,root,productGroup,pickables=[],items3=[],formHi=null,phaseGroups=[],contentMesh,containerGroup;
+const cam={theta:.62,phi:1.18,dist:30,target:null}; let camGoal;
+const c3=document.getElementById('c3d'), v3=document.getElementById('v3d');
+const labelsEl=document.getElementById('labels'), tip=document.getElementById('tip');
+let explode=.8, exShown=.8;
+
+function lathe(points,seg=48){return new THREE.LatheGeometry(points.map(p=>new THREE.Vector2(p[0],p[1])),seg);}
+const PROFILES={
+ bottle:{body:[[0,0],[2.1,0],[2.25,.25],[2.25,5.6],[1.9,6.4],[.95,6.9],[.95,7.5],[0,7.5]],fill:5.4,cap:{r:1.08,h:1.5,y:8.2}},
+ dropper:{body:[[0,0],[1.75,0],[1.85,.2],[1.85,4.6],[1.25,5.3],[.75,5.55],[.75,6.05],[0,6.05]],fill:4.4,cap:{r:.9,h:1.1,y:6.6},bulb:true},
+ jar:{body:[[0,0],[3.2,0],[3.35,.25],[3.35,3.5],[3.15,3.75],[0,3.75]],fill:3.1,cap:{r:3.5,h:1.15,y:4.35}},
+ pump:{body:[[0,0],[2.1,0],[2.25,.25],[2.25,6.2],[1.6,6.9],[.8,7.15],[.8,7.6],[0,7.6]],fill:5.9,cap:{r:.95,h:.9,y:8.0},pump:true},
+ tube:{body:[[0,1.2],[1.15,1.2],[1.9,2.2],[2.05,6.2],[2.3,8.6],[0,8.6]],fill:8.2,cap:{r:1.2,h:1.2,y:.6},tube:true},
+ patch:{patch:true,fill:.6}
+};
+
+function init3d(){
+  renderer=new THREE.WebGLRenderer({canvas:c3,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.outputEncoding=THREE.sRGBEncoding;
+  scene=new THREE.Scene(); camera=new THREE.PerspectiveCamera(36,1,.5,500);
+  scene.add(new THREE.HemisphereLight(0xe6efff,0x15181b,.8));
+  const k=new THREE.DirectionalLight(0xffffff,.9);k.position.set(20,40,30);scene.add(k);
+  const r=new THREE.DirectionalLight(0x9fd8ff,.4);r.position.set(-30,20,-30);scene.add(r);
+  const g=new THREE.GridHelper(80,20,0x27313a,0x1b2228);g.position.y=-.02;scene.add(g);
+  root=new THREE.Group();scene.add(root);
+  tv=new THREE.Vector3(); ray=new THREE.Raycaster(); nd=new THREE.Vector2();
+  cam.target=new THREE.Vector3(4,6,0); camGoal={theta:cam.theta,phi:cam.phi,dist:cam.dist,target:cam.target.clone()};
+  bindOrbit();
+}
+function build3d(){
+  if(!has3) return;
+  if(productGroup){root.remove(productGroup);productGroup.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});}
+  productGroup=new THREE.Group(); root.add(productGroup); pickables=[]; items3=[]; formHi=null; phaseGroups=[];
+  labelsEl.innerHTML='';
+  const prof=PROFILES[cur.container];
+  // 용기
+  containerGroup=new THREE.Group(); productGroup.add(containerGroup);
+  if(prof.patch){
+    // 이형 필름 위 반달형 아이패치 2쌍
+    const film=new THREE.Mesh(new THREE.BoxGeometry(6.4,.04,5.2),new THREE.MeshStandardMaterial({color:0xdfe7ec,transparent:true,opacity:.35,roughness:.2,depthWrite:false}));film.position.y=.02;containerGroup.add(film);
+    const sh=new THREE.Shape();sh.absellipse(0,0,1.25,.95,Math.PI,2*Math.PI,false);sh.lineTo(.95,.18);sh.absellipse(0,.18,.95,.5,0,Math.PI,true);sh.lineTo(-1.25,0);
+    const pg=new THREE.ExtrudeGeometry(sh,{depth:.26,bevelEnabled:true,bevelThickness:.09,bevelSize:.07,bevelSegments:4,curveSegments:48});pg.rotateX(-Math.PI/2);
+    const pm=new THREE.MeshStandardMaterial({color:0xf3f6f8,transparent:true,opacity:.86,roughness:.08,metalness:.05,emissive:new THREE.Color(0x1a2226)});
+    [[-1.5,0,1.1,.12],[1.5,0,1.1,-.12],[-1.5,.06,-1.2,.08],[1.5,.06,-1.2,-.08]].forEach(([x,y,z,r],i)=>{const m=new THREE.Mesh(pg,pm);m.position.set(x,.06+y,z);m.rotation.y=r+(x>0?Math.PI*0:0);if(x>0)m.scale.x=-1;containerGroup.add(m);});
+    contentMesh=containerGroup.children[1];
+    containerGroup.scale.setScalar(1.75); containerGroup.userData.labelZ=5.2;
+    containerGroup.userData.fillMid=prof.fill;
+    const pl=document.createElement('div');pl.className='prodlabel';pl.textContent='완제품 (아이패치)';labelsEl.appendChild(pl);containerGroup.userData.label=pl;
+  } else {
+  const glass=new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.16,roughness:.08,metalness:0,side:THREE.DoubleSide,depthWrite:false});
+  const body=new THREE.Mesh(lathe(prof.body),glass); containerGroup.add(body);
+  const capM=new THREE.MeshStandardMaterial({color:0x2c3338,roughness:.45,metalness:.3});
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(prof.cap.r,prof.cap.r,prof.cap.h,40),capM); cap.position.y=prof.cap.y; containerGroup.add(cap);
+  if(prof.bulb){const b=new THREE.Mesh(new THREE.SphereGeometry(.8,24,16),capM);b.position.y=prof.cap.y+1.1;b.scale.y=1.3;containerGroup.add(b);}
+  if(prof.pump){const s=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,1.2,16),capM);s.position.y=prof.cap.y+1;containerGroup.add(s);const h=new THREE.Mesh(new THREE.BoxGeometry(1.4,.6,2.6),capM);h.position.set(0,prof.cap.y+1.8,.6);containerGroup.add(h);}
+  if(prof.tube){body.scale.z=.55;cap.scale.z=1;}
+  // 내용물
+  const pts=[]; prof.body.forEach(p=>{if(p[1]<=prof.fill) pts.push([Math.max(0,p[0]*.93),p[1]]);});
+  const last=prof.body.find(p=>p[1]>prof.fill)||prof.body[prof.body.length-1];
+  pts.push([pts[pts.length-1][0],prof.fill]); pts.push([0,prof.fill]);
+  if(prof.tube){pts[0]=[0,1.25];}
+  const cm=new THREE.MeshStandardMaterial({color:cur.look.color,transparent:true,opacity:Math.max(.28,cur.look.opacity),roughness:.25,metalness:0,depthWrite:cur.look.opacity>.9});
+  contentMesh=new THREE.Mesh(lathe(pts),cm); if(prof.tube) contentMesh.scale.z=.55; containerGroup.add(contentMesh);
+  containerGroup.userData.fillMid=prof.fill/2;
+  const pl=document.createElement('div');pl.className='prodlabel';pl.textContent='완제품';labelsEl.appendChild(pl);containerGroup.userData.label=pl;
+  }
+  // 상별 트레이 (원료 = 성질을 나타낸 3D 모양)
+  buildPhases();
+  setHome(); goHome();
+  renderLegend();
+  paint3d();
+}
+const TRAY_R=2.9, TRAY_H=1.7;
+const FORM={
+ water:{n:'물',d:'투명한 액체',c:'#5fb3e6'},
+ humectant:{n:'보습제',d:'투명한 점성 방울',c:'#8fe3d6'},
+ oil:{n:'오일·에몰리언트',d:'호박색 기름 방울',c:'#f2b53c'},
+ solidfat:{n:'고형 지방·왁스',d:'하얀 왁스 조각',c:'#efe9da'},
+ surfactant:{n:'유화제·계면활성제',d:'친수 머리(파랑)와 친유 꼬리(노랑) 분자가 모인 미셀',c:'#6fd0e8'},
+ polymer:{n:'고분자·점증제',d:'엉킨 사슬',c:'#7bd389'},
+ particle:{n:'분체·무기 입자',d:'고운 가루',c:'#f4f6f8'},
+ crystal:{n:'분말 활성 성분',d:'결정',c:'#cfe6ff'},
+ ion:{n:'pH 조정·이온',d:'양이온(분홍)과 음이온(하늘)',c:'#f07aa8'},
+ preservative:{n:'보존제',d:'캡슐',c:'#b79cf0'},
+ fragrance:{n:'향',d:'떠다니는 보라 방울',c:'#d7b8ff'},
+ extract:{n:'추출물·활성 원료',d:'잎',c:'#8fbf6a'},
+ alcohol:{n:'알코올',d:'휘발하는 기포',c:'#e8f4ff'}
+};
+function formOf(it,ph){
+  if(it.form&&FORM[it.form]) return it.form;
+  const s=String(it.inci||'').toLowerCase(), f=String(it.fn||'');
+  if(/^보존|보존제/.test(f)||/phenoxyethanol|sodium benzoate|potassium sorbate|isothiazolinone|paraben/.test(s)) return 'preservative';
+  if(/fragrance|perfume|parfum/.test(s)||f==='향') return 'fragrance';
+  if(/^water|^aqua\b|flower water|hydrosol/.test(s)) return 'water';
+  if(/carbomer|crosspolymer|xanthan|hyaluron|\bgum\b|cellulose|hectorite|polyacrylate|acrylates/.test(s)) return 'polymer';
+  if(/보습/.test(f)&&!/고분자/.test(f)) return 'humectant';
+  if(/titanium|zinc oxide|tio₂|silica|starch|alumina|mica|kaolin/.test(s)) return 'particle';
+  if(/(lauric|myristic|palmitic|\bstearic) acid|stearyl alcohol|cetyl alcohol|cetearyl alcohol|glyceryl stearate|\bwax|\bcera\b/.test(s)) return 'solidfat';
+  if(/유화|가용화|계면|세정|분산|기포/.test(f)||/polysorbate|peg-|ceteareth|taurate|betaine|methylglucose/.test(s)) return 'surfactant';
+  if(/hydroxide|lactic acid|citric|tromethamine|triethanolamine|sulfate|edta|chloride/.test(s)||/pH|중화|킬레이트/.test(f)) return 'ion';
+  if(/niacinamide|glucosamine|arbutin|ascorb|adenosine/.test(s)) return 'crystal';
+  if(ph.kind!=='oil'&&/glycerin|glycol|hexanediol|propanediol|sorbitol|panthenol/.test(s)) return 'humectant';
+  if(/^alcohol/.test(s)) return 'alcohol';
+  if(/활성|미백|진정/.test(f)) return 'extract';
+  if(ph.kind==='oil'||/\boil\b|ester|triglyceride|squalane|siloxane|dimethicone|benzoate|oleate|palmitate|stearate/.test(s)) return 'oil';
+  if(/extract|ferment|추출/.test(s+(it.ko||''))) return 'extract';
+  return ({water:'humectant',oil:'oil',poly:'polymer',powder:'particle',ph:'ion',emul:'surfactant',surf:'surfactant',solub:'surfactant',cool:'extract',active:'extract'})[ph.kind]||'extract';
+}
+function strHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mkMat(hex,o){const m=new THREE.MeshStandardMaterial(Object.assign({color:new THREE.Color(hex),roughness:.35,metalness:.05,transparent:true,opacity:1},o||{}));m.userData.baseOp=m.opacity;return m;}
+let DROP_GEO=null;
+function dropGeo(){if(!DROP_GEO){const pts=[[0,-1],[.5,-.85],[.78,-.45],[.72,0],[.5,.42],[.22,.78],[0,1]].map(p=>new THREE.Vector2(p[0],p[1]));DROP_GEO=new THREE.LatheGeometry(pts,24);}return DROP_GEO;}
+const normOf=pct=>Math.min(1,Math.max(0,(Math.log10(Math.max(pct,.05))+1.3)/3.3));
+function buildItem(form,norm,R,rng){
+  const g=new THREE.Group(), mats=[]; const add=(geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);g.add(m);return m;};
+  const pos=(h)=>{const a=rng()*6.283,r=Math.sqrt(rng())*R;return [Math.cos(a)*r,(h||0),Math.sin(a)*r];};
+  const sz=1.05+.75*norm;
+  if(form==='oil'){const m=mkMat('#f2b53c',{roughness:.05,metalness:.25,opacity:.94,emissive:new THREE.Color('#2a1600')});mats.push(m);const n=3+Math.round(9*norm);const geo=new THREE.SphereGeometry(1,24,16);
+    for(let i=0;i<n;i++){const r=(.13+.17*rng())*sz;const [x,,z]=pos();const s=add(geo,m,x,r,z);s.scale.setScalar(r);}}
+  else if(form==='humectant'){const m=mkMat('#8fe3d6',{roughness:.02,opacity:.55});mats.push(m);const n=2+Math.round(4*norm);
+    for(let i=0;i<n;i++){const r=(.16+.1*rng())*sz;const [x,,z]=pos();const s=add(dropGeo(),m,x,r,z);s.scale.setScalar(r);}}
+  else if(form==='solidfat'){const m=mkMat('#efe9da',{roughness:.9,opacity:1});mats.push(m);const n=3+Math.round(7*norm);const fg=new THREE.CylinderGeometry(.3,.32,.07,10),pg=new THREE.SphereGeometry(.2,14,10);
+    for(let i=0;i<n;i++){const [x,,z]=pos();const s=add(i%3===2?pg:fg,m,x,.08+rng()*.12,z);s.rotation.set((rng()-.5)*.9,rng()*3,(rng()-.5)*.9);s.scale.set(sz,i%3===2?.5*sz:sz,sz);}}
+  else if(form==='surfactant'){const hm=mkMat('#6fd0e8',{roughness:.3}),tm=mkMat('#e9c37a',{roughness:.5});mats.push(hm,tm);const hg=new THREE.SphereGeometry(.085,12,8),tg=new THREE.CylinderGeometry(.022,.022,.28,6);const Y=new THREE.Vector3(0,1,0);
+    const nm=norm>.6&&R>.8?2:1;
+    for(let k=0;k<nm;k++){const [cx,,cz]=nm===1?[0,0,0]:pos();const cy=.55*sz;const N=14;
+      for(let i=0;i<N;i++){const yy=1-(i+.5)/N*2,rr=Math.sqrt(1-yy*yy),th=i*2.399;const d=new THREE.Vector3(Math.cos(th)*rr,yy,Math.sin(th)*rr);
+        const h=add(hg,hm,cx+d.x*.42*sz,cy+d.y*.42*sz,cz+d.z*.42*sz);h.scale.setScalar(sz);
+        const t=add(tg,tm,cx+d.x*.25*sz,cy+d.y*.25*sz,cz+d.z*.25*sz);t.quaternion.setFromUnitVectors(Y,d);t.scale.setScalar(sz);}}}
+  else if(form==='polymer'){const m=mkMat('#7bd389',{roughness:.4,opacity:.9});mats.push(m);const n=2+Math.round(3*norm);
+    for(let i=0;i<n;i++){const pts=[];for(let j=0;j<7;j++){const [x,,z]=pos();pts.push(new THREE.Vector3(x*.9,.15+rng()*.7*sz,z*.9));}
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),80,.035*sz,6,false),m));}}
+  else if(form==='particle'){const m=mkMat('#f4f6f8',{roughness:.7});mats.push(m);const n=40+Math.round(110*norm);const im=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.055,0),m,n);const o=new THREE.Object3D();
+    for(let i=0;i<n;i++){const a=rng()*6.283,r=Math.pow(rng(),.7)*R;o.position.set(Math.cos(a)*r,.05+(1-r/R)*.45*rng()*sz,Math.sin(a)*r);o.scale.setScalar(.8+rng()*.8);o.updateMatrix();im.setMatrixAt(i,o.matrix);}g.add(im);}
+  else if(form==='crystal'){const m=mkMat('#cfe6ff',{roughness:.08,metalness:.1,opacity:.85,flatShading:true});mats.push(m);const n=2+Math.round(5*norm);const cg=new THREE.OctahedronGeometry(.22,0);
+    for(let i=0;i<n;i++){const [x,,z]=pos();const c=add(cg,m,x,.22*sz,z);c.scale.set(sz,1.45*sz,sz);c.rotation.set(rng()*.5,rng()*3,rng()*.5);}}
+  else if(form==='ion'){const a=mkMat('#f07aa8',{roughness:.3}),b=mkMat('#7fd0ff',{roughness:.3});mats.push(a,b);const n=2+Math.round(4*norm);const ga=new THREE.SphereGeometry(.1,12,8),gb=new THREE.SphereGeometry(.07,12,8);
+    for(let i=0;i<n;i++){const [x,,z]=pos();add(ga,a,x,.15+rng()*.3,z).scale.setScalar(sz);add(gb,b,x+.18,.15+rng()*.3,z+.08).scale.setScalar(sz);}}
+  else if(form==='preservative'){const a=mkMat('#b79cf0',{roughness:.25}),b=mkMat('#f2eefc',{roughness:.25});mats.push(a,b);const n=1+Math.round(2*norm);const cyl=new THREE.CylinderGeometry(.1,.1,.16,14),sph=new THREE.SphereGeometry(.1,14,10);
+    for(let i=0;i<n;i++){const [x,,z]=pos();const c=new THREE.Group();const c1=new THREE.Mesh(cyl,a);c1.position.y=.08;const c2=new THREE.Mesh(cyl,b);c2.position.y=-.08;const s1=new THREE.Mesh(sph,a);s1.position.y=.16;const s2=new THREE.Mesh(sph,b);s2.position.y=-.16;c.add(c1,c2,s1,s2);c.position.set(x,.14,z);c.rotation.set(Math.PI/2,rng()*3,0);c.scale.setScalar(sz*1.2);g.add(c);}}
+  else if(form==='fragrance'){const m=mkMat('#d7b8ff',{roughness:.1,opacity:.75,emissive:new THREE.Color('#2a1840')});mats.push(m);const n=2+Math.round(3*norm);
+    for(let i=0;i<n;i++){const [x,,z]=pos();const s=add(dropGeo(),m,x,.45+rng()*.5,z);s.scale.setScalar(.12*sz);}}
+  else if(form==='alcohol'){const m=mkMat('#e8f4ff',{roughness:.02,opacity:.35});mats.push(m);const n=4+Math.round(6*norm);const geo=new THREE.SphereGeometry(1,16,12);
+    for(let i=0;i<n;i++){const [x,,z]=pos();const s=add(geo,m,x,.3+rng()*.8,z);s.scale.setScalar(.06+.08*rng());}}
+  else {const m=mkMat('#8fbf6a',{roughness:.6});const v=mkMat('#5d8a43',{roughness:.6});mats.push(m,v);const n=2+Math.round(3*norm);const lg=new THREE.SphereGeometry(.32,18,10),vg=new THREE.CylinderGeometry(.012,.012,.6,4);
+    for(let i=0;i<n;i++){const [x,,z]=pos();const l=new THREE.Group();const leaf=new THREE.Mesh(lg,m);leaf.scale.set(1,.16,.5);const vein=new THREE.Mesh(vg,v);vein.rotation.z=Math.PI/2;vein.position.y=.04;l.add(leaf,vein);l.position.set(x,.12,z);l.rotation.set((rng()-.5)*.6,rng()*3,(rng()-.5)*.4);l.scale.setScalar(sz);g.add(l);}}
+  return {g,mats};
+}
+function buildPhases(){
+  cur.phases.forEach((ph,pi)=>{
+    const tot=phaseTotal(ph);
+    const grp=new THREE.Group(); productGroup.add(grp); grp.userData={y0:pi*TRAY_H,h:TRAY_H,pi,mats:[]};
+    const tm=[mkMat(ph.color,{opacity:.6,roughness:.4}),mkMat('#cfe3ef',{opacity:.1,side:THREE.DoubleSide,depthWrite:false,roughness:.05}),mkMat(ph.color,{opacity:.95,roughness:.3})];
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(TRAY_R,TRAY_R,.1,56),tm[0]);base.position.y=.05;grp.add(base);
+    const wall=new THREE.Mesh(new THREE.CylinderGeometry(TRAY_R,TRAY_R,TRAY_H*.62,56,1,true),tm[1]);wall.position.y=TRAY_H*.31;grp.add(wall);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(TRAY_R,.045,8,72),tm[2]);rim.rotation.x=Math.PI/2;rim.position.y=TRAY_H*.62;grp.add(rim);
+    grp.userData.mats=tm;
+    const forms=ph.items.map(it=>formOf(it,ph));
+    let floor=.12; const wi=forms.indexOf('water');
+    if(wi>=0){const share=pnum(ph.items[wi])/Math.max(tot,.01);const lh=.25+.5*share;const lm=mkMat('#5fb3e6',{opacity:.4,roughness:.04,depthWrite:false});
+      const liq=new THREE.Mesh(new THREE.CylinderGeometry(TRAY_R-.06,TRAY_R-.06,lh,56),lm);liq.position.y=.1+lh/2;liq.userData={pi,ii:wi};grp.add(liq);pickables.push(liq);
+      items3.push({pi,ii:wi,mats:[lm],g:liq,form:'water',float:false});floor=.1+lh*.7;}
+    const others=ph.items.map((it,ii)=>({it,ii,form:forms[ii]})).filter(o=>o.form!=='water');
+    const n=others.length;
+    others.forEach((o,k)=>{
+      const ang=Math.PI/2+2*Math.PI*k/Math.max(1,n), rad=n===1?0:(n<=3?1.45:1.8);
+      const spread=n===1?1.7:Math.min(1.0,Math.PI*rad/n*.75);
+      const rng=mulberry(strHash(o.it.inci)+pi*97+k);
+      const {g,mats}=buildItem(o.form,normOf(pnum(o.it)),spread,rng);
+      g.position.set(Math.cos(ang)*rad,floor,-Math.sin(ang)*rad);
+      g.userData.baseY=floor; g.userData.ph=rng()*6.28;
+      g.traverse(m=>{if(m.isMesh){m.userData={pi,ii:o.ii};pickables.push(m);}});
+      grp.add(g); items3.push({pi,ii:o.ii,mats,g,form:o.form,float:true});
+    });
+    phaseGroups.push(grp);
+    const lb=document.createElement('div');lb.className='plabel';lb.tabIndex=0;lb.style.borderLeftColor=ph.color;
+    lb.innerHTML=ph.k+'상 '+esc(ph.name)+'<small>≈ '+fmt1(tot)+'%</small>';
+    lb.onclick=()=>{select(null);focusPhase(pi);}; lb.onkeydown=e=>{if(e.key==='Enter'){select(null);focusPhase(pi);}};
+    lb.title='눌러서 이 상으로 확대';
+    labelsEl.appendChild(lb); grp.userData.label=lb;
+  });
+}
+const SPI={cx:9.2,r:6.1,rise:1.75,da:1.02,a0:.6};
+function spiralAng(i){return SPI.a0+i*SPI.da;}
+function stairPos(i,t){const k=smooth((t-.2)/.8),a=spiralAng(i);
+  const col={x:6.4,y:.3+i*(TRAY_H+.45),z:0}, sp={x:SPI.cx+SPI.r*Math.sin(a),y:.4+i*SPI.rise,z:SPI.r*Math.cos(a)};
+  return {x:col.x+(sp.x-col.x)*k,y:col.y+(sp.y-col.y)*k,z:col.z+(sp.z-col.z)*k,rot:a*k,k};}
+let camHome=null;
+function setHome(){const n=cur.phases.length,top=.4+(n-1)*SPI.rise;const minX=-5,maxX=SPI.cx+SPI.r+TRAY_R;
+  camHome={target:new THREE.Vector3((minX+maxX)/2,Math.max(2.5,top*.36+.3),1.6),dist:Math.max(36,(maxX-minX)*1.4+top*.9),theta:.3,phi:.88};}
+function goHome(){if(!camHome)return;camGoal.target.copy(camHome.target);camGoal.dist=camHome.dist;camGoal.theta=camHome.theta;camGoal.phi=camHome.phi;}
+function focusPhase(pi){const st=stairPos(pi,Math.max(exShown,explode));camGoal.target.set(st.x,st.y+.7,st.z);camGoal.dist=12.5;camGoal.phi=.92;if(st.k>.5)camGoal.theta=nearAngle(cam.theta,spiralAng(pi));}
+function nearAngle(cur,a){while(a-cur>Math.PI)a-=2*Math.PI;while(a-cur<-Math.PI)a+=2*Math.PI;return a;}
+function renderLegend(){
+  const el=document.getElementById('flegend'); if(!el) return;
+  const seen=[]; cur.phases.forEach(ph=>ph.items.forEach(it=>{const f=formOf(it,ph);if(!seen.includes(f))seen.push(f);}));
+  el.innerHTML='<div class="lgh">모양 = 성질 · 크기 = 함량</div>'+seen.map(f=>'<div class="lgi" data-f="'+f+'" tabindex="0" title="'+FORM[f].d+'"><span class="lgs" style="background:'+FORM[f].c+'"></span><b>'+FORM[f].n+'</b></div>').join('');
+  el.querySelectorAll('.lgi').forEach(d=>{const on=()=>{formHi=d.dataset.f;paint3d();},off=()=>{formHi=null;paint3d();};d.onmouseenter=on;d.onfocus=on;d.onmouseleave=off;d.onblur=off;});
+}
+let hoverKey=null;
+function paint3d(){
+  items3.forEach(o=>{const s=sel&&sel.pi===o.pi&&sel.ii===o.ii, h=(formHi&&o.form===formHi)||(hoverKey===o.pi+':'+o.ii);
+    o.mats.forEach(m=>{if(m.userData.baseEm===undefined)m.userData.baseEm=m.emissive.getHex();m.emissive.setHex(s?0x2a6e66:(h?0x24504a:m.userData.baseEm));});});
+}
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const smooth=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+function layout3d(){
+  exShown+= (explode-exShown)*.12;
+  const t=exShown; const p=smooth(t/.45); const time=performance.now()/1000;
+  const colX=7.2;
+  containerGroup.position.x=-p*1.2;
+  contentMesh.material.opacity=Math.max(.28,cur.look.opacity)*(1-.45*p);
+  const gap=.45+1.6*smooth((t-.2)/.8), lift=.3*smooth((t-.45)/.55);
+  const fm=containerGroup.userData.fillMid, fade=Math.min(1,p*1.6);
+  phaseGroups.forEach((g,i)=>{
+    const st=stairPos(i,t);
+    g.position.set(st.x*p+containerGroup.position.x*(1-p),fm*(1-p)+st.y*p,st.z*p); g.rotation.y=st.rot;
+    const s=.3+.7*p; g.scale.set(s,s*(p<.05?.01:1),s);
+    g.visible=p>.02;
+    g.userData.mats.forEach(m=>{m.opacity=m.userData.baseOp*fade*(m===g.userData.arm?st.k:1);});
+  });
+  {const k=smooth((t-.2)/.8);const pl=productGroup.userData.pole,pc=productGroup.userData.poleCap;if(pl){pl.visible=pc.visible=k>.05;pl.material.opacity=pl.material.userData.baseOp*k;}}
+  items3.forEach(o=>{
+    const dim=(sel&&!(sel.pi===o.pi&&sel.ii===o.ii))||(formHi&&o.form!==formHi);
+    o.mats.forEach(m=>{m.opacity=m.userData.baseOp*fade*(dim?.22:1);});
+    if(o.float){o.g.position.y=o.g.userData.baseY+lift+(reduce?0:Math.sin(time*1.3+o.g.userData.ph)*.05);if(!reduce)o.g.rotation.y=Math.sin(time*.3+o.g.userData.ph)*.25;}
+  });
+}
+let tv,ray,nd;
+function labels3d(){
+  const w=c3.clientWidth,h=c3.clientHeight; const p=smooth(exShown/.45);
+  phaseGroups.forEach(g=>{
+    const lb=g.userData.label; if(p<.6){lb.style.display='none';return;}
+    {const dx=camera.position.x-g.position.x,dz=camera.position.z-g.position.z,dl=Math.hypot(dx,dz)||1;tv.set(g.position.x+dx/dl*(TRAY_R*g.scale.x+.2),g.position.y,g.position.z+dz/dl*(TRAY_R*g.scale.z+.2)).project(camera);}
+    lb.style.display='block';lb.style.left=((tv.x+1)/2*w)+'px';lb.style.top=((1-tv.y)/2*h)+'px';
+    lb.style.opacity=Math.min(1,(p-.6)*3);
+  });
+  const pl=containerGroup.userData.label; tv.set(containerGroup.position.x,-.6,containerGroup.userData.labelZ||0).project(camera);
+  pl.style.left=((tv.x+1)/2*w)+'px';pl.style.top=((1-tv.y)/2*h)+'px';
+}
+// 궤도 카메라
+function bindOrbit(){
+  let drag=null,down=null;const ptr=new Map();let pinch=0;
+  c3.addEventListener('contextmenu',e=>e.preventDefault());
+  c3.addEventListener('pointerdown',e=>{c3.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});down={x:e.clientX,y:e.clientY};drag={x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey};if(ptr.size===2){const [a,b]=[...ptr.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}});
+  c3.addEventListener('pointermove',e=>{
+    if(ptr.has(e.pointerId))ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptr.size===2){const [a,b]=[...ptr.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch)camGoal.dist=Math.min(90,Math.max(10,camGoal.dist*pinch/d));pinch=d;return;}
+    if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;
+      if(drag.pan){const r=new THREE.Vector3().setFromMatrixColumn(camera.matrix,0),u=new THREE.Vector3().setFromMatrixColumn(camera.matrix,1);const k=cam.dist*.0016;camGoal.target.addScaledVector(r,-dx*k).addScaledVector(u,dy*k);}
+      else{camGoal.theta-=dx*.006;camGoal.phi=Math.min(1.55,Math.max(.25,camGoal.phi-dy*.006));}
+    } else hover(e);
+  });
+  const end=e=>{ptr.delete(e.pointerId);if(ptr.size<2)pinch=0;if(down&&e.type==='pointerup'&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<5){const h=hit(e);if(h)select(h.pi,h.ii);}drag=null;down=null;};
+  c3.addEventListener('pointerup',end);c3.addEventListener('pointercancel',end);
+  c3.addEventListener('pointerleave',()=>{tip.style.display='none';if(hoverKey){hoverKey=null;paint3d();}});
+  c3.addEventListener('dblclick',e=>{const h=hit(e);if(h){select(h.pi,h.ii);focusPhase(h.pi);}});
+  c3.addEventListener('wheel',e=>{e.preventDefault();camGoal.dist=Math.min(90,Math.max(10,camGoal.dist*Math.exp(e.deltaY*.001)));},{passive:false});
+}
+function visChain(o){while(o){if(!o.visible)return false;o=o.parent;}return true;}
+function hit(e){const r=c3.getBoundingClientRect();nd.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(nd,camera);const hs=ray.intersectObjects(pickables.filter(visChain),false);return hs.length?hs[0].object.userData:null;}
+function hover(e){
+  const h=hit(e); c3.classList.toggle('hov',!!h);
+  const hk=h?h.pi+':'+h.ii:null; if(hk!==hoverKey){hoverKey=hk;paint3d();}
+  if(h){const ph=cur.phases[h.pi],it=ph.items[h.ii],f=FORM[formOf(it,ph)];const r=v3.getBoundingClientRect();tip.style.display='block';tip.innerHTML=esc(it.inci)+' <b>'+plab(it)+(typeof it.pct==='number'?'%':'')+'</b><br><span style="color:var(--muted)">'+esc(it.fn)+' · 3D: '+f.n+'</span>';tip.style.left=Math.min(r.width-290,e.clientX-r.left+14)+'px';tip.style.top=(e.clientY-r.top+12)+'px';}
+  else tip.style.display='none';
+}
+function camApply(){
+  cam.theta+=(camGoal.theta-cam.theta)*.15;cam.phi+=(camGoal.phi-cam.phi)*.15;cam.dist+=(camGoal.dist-cam.dist)*.15;cam.target.lerp(camGoal.target,.15);
+  const s=Math.sin(cam.phi);camera.position.set(cam.target.x+cam.dist*s*Math.sin(cam.theta),cam.target.y+cam.dist*Math.cos(cam.phi),cam.target.z+cam.dist*s*Math.cos(cam.theta));camera.lookAt(cam.target);
+}
+document.getElementById('homeBtn').onclick=()=>goHome();
+document.getElementById('explode').addEventListener('input',e=>{explode=e.target.value/100;document.getElementById('ek').textContent=e.target.value+'%';});
+
+/* ═════════════ 공정 (2D) ═════════════ */
+const cv=document.getElementById('cv'), cmc=document.getElementById('cm');
+const vctx=cv.getContext('2d'), mctx=cmc.getContext('2d');
+let stepIdx=0, playing=false, playT=0, creamRpm=4000, oneMonth=false;
+const VS={fill:0,col:[214,238,248],op:.2,visc:0,temp:25,rpm:0,mixer:'none',pour:0,ang:0,side:null,sideFill:0};
+const MS={bg:'water',mol:0,ha:0,mic:0,poly:0,expand:0,pkind:'carbomer',drop:0,dr:.4,lam:0,part:0,agg:0,soap:0,cryst:0,scale:''};
+let MT=Object.assign({},MS);
+const rnd=mulberry(7); const PTS=[...Array(260)].map(()=>({x:rnd(),y:rnd(),a:rnd()*6.28,s:rnd()}));
+
+function fillAt(i){ // 누적 투입 비율
+  let tot=0; const done=new Set(); for(let k=0;k<=i;k++) cur.steps[k].add.forEach(a=>done.add(a));
+  cur.phases.forEach(ph=>{ if(done.has(ph.k)) tot+=phaseTotal(ph); });
+  if(cur.steps[i].partial) tot+=60; return Math.min(1,tot/100);
+}
+function gotoStep(i){
+  stepIdx=Math.max(0,Math.min(cur.steps.length-1,i));
+  const s=cur.steps[stepIdx];
+  VS.target={fill:fillAt(stepIdx),col:hexToRgb(s.color),op:s.op,visc:s.visc,temp:s.temp,rpm:s.rpmctl?creamRpm:s.rpm};
+  const prev=cur.steps[stepIdx-1];
+  VS.cast=s.cast||0; if(s.cast===1) VS.castFill=0;
+  VS.mixer=s.mixer; VS.side=s.side||(prev&&prev.side&&s.add.length?prev.side:null); VS.pour=s.add.length?1:0;
+  MT=Object.assign({},{bg:'water',mol:0,ha:0,mic:0,poly:0,expand:0,pkind:'carbomer',drop:0,dr:.4,lam:0,part:0,agg:0,soap:0,cryst:0,scale:''},s.micro);
+  MS.bg=MT.bg; MS.pkind=MT.pkind; MS.scale=MT.scale;
+  if(s.rpmctl) applyCreamRpm();
+  renderStepCard();
+}
+function applyCreamRpm(){
+  const map={2000:.62,4000:.36,8000:.3};
+  MT.dr=map[creamRpm]; MT.coal=(oneMonth&&creamRpm===8000)?1:0;
+  if(VS.target) VS.target.rpm=creamRpm;
+  document.getElementById('mnote').textContent= creamRpm===4000?'4,000 rpm: 방울이 가장 곱고 고름'+(oneMonth?' · 1개월 후에도 유지':''):creamRpm===2000?'2,000 rpm: 방울이 더 크고 분포가 넓음'+(oneMonth?' · 1개월 후에도 유지':''):'8,000 rpm: 처음엔 작지만'+(oneMonth?' 1개월 후 방울이 합쳐지고 엉김':' 1개월 후를 눌러 보세요');
+}
+function renderStepCard(){
+  const s=cur.steps[stepIdx];
+  const dots=document.getElementById('dots'); dots.innerHTML='';
+  cur.steps.forEach((st,i)=>{const b=document.createElement('button');b.className='dot'+(i===stepIdx?' on':'')+(i<stepIdx?' done':'');b.textContent=i+1;b.title=st.t;b.onclick=()=>{stopPlay();gotoStep(i);};dots.appendChild(b);});
+  document.getElementById('stitle').textContent=(stepIdx+1)+'. '+s.t;
+  const c=[]; if(s.add.length) c.push('투입: '+s.add.map(k=>k+'상').join(' + ')); if(s.side) c.push('별도 용기: '+s.side.label);
+  c.push('온도 '+s.temp+' °C'); c.push(s.mixer==='none'?'교반 없음':mixName(s.mixer)+' '+(s.rpmctl?creamRpm:s.rpm).toLocaleString()+' rpm'); if(s.time&&s.time!=='—') c.push('시간 '+s.time); if(s.ph) c.push('pH '+s.ph);
+  document.getElementById('scond').innerHTML=c.map(x=>'<span>'+esc(x)+'</span>').join('');
+  document.getElementById('sdesc').textContent=s.desc;
+  document.getElementById('swhy').innerHTML='<b>왜?</b> '+esc(s.why)+chip(s.tag,s.src);
+  const rc=document.getElementById('rpmctl');
+  if(s.rpmctl){rc.style.display='flex';rc.innerHTML=[2000,4000,8000].map(r=>'<button data-r="'+r+'" class="'+(creamRpm===r?'on':'')+'">'+r.toLocaleString()+'</button>').join('')+'<button data-m="1" class="'+(oneMonth?'on':'')+'">1개월 후</button>';
+    rc.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.r){creamRpm=+b.dataset.r;}else{oneMonth=!oneMonth;}gotoStep(stepIdx);});}
+  else {rc.style.display='none'; document.getElementById('mnote').textContent=microNote(s);}
+  document.getElementById('sprev').disabled=stepIdx===0; document.getElementById('snext').disabled=stepIdx===cur.steps.length-1;
+}
+function microNote(s){const m=s.micro;if(m.cryst)return '판 모양 비누 결정이 자라 진주 광택과 몸체를 만듭니다';if(m.soap)return '지방산이 비누가 되어 물속에 미셀로 퍼집니다';if(m.part&&m.drop)return '오일 연속상 속 물방울(파랑)과 무기 입자(흰색)';if(m.part)return m.agg>.5?'뭉친 무기 입자 덩어리':'고르게 풀린 무기 입자';if(m.lam)return '방울 사이를 층상(라멜라) 겔이 채움';if(m.drop)return '물속의 오일 방울 (O/W)';if(m.poly&&m.pkind==='carbomer')return m.expand>.6?'부푼 미세 젤 입자가 공간을 빽빽이 채움':'아직 작게 말린 고분자 입자';if(m.poly)return '풀린 다당류 사슬이 얽힌 네트워크';if(m.mic)return '향을 품은 미셀 (수 nm)';if(m.bg==='oil')return '녹은 지방 (오일상)';return '물에 녹은 분자들';}
+function mixName(m){return {paddle:'패들',helix:'헬릭스',homo:'호모믹서',blade:'블레이드',anchor:'앵커',none:'—'}[m];}
+document.getElementById('sprev').onclick=()=>{stopPlay();gotoStep(stepIdx-1);};
+document.getElementById('snext').onclick=()=>{stopPlay();gotoStep(stepIdx+1);};
+document.getElementById('splay').onclick=()=>{if(playing)stopPlay();else{playing=true;playT=0;if(stepIdx===cur.steps.length-1)gotoStep(0);document.getElementById('splay').textContent='정지';}};
+function stopPlay(){playing=false;document.getElementById('splay').textContent='자동 재생';}
+
+function sizeCanvas(c){const r=c.getBoundingClientRect();const d=Math.min(devicePixelRatio,2);if(c.width!==Math.round(r.width*d)||c.height!==Math.round(r.height*d)){c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);}return {w:r.width,h:r.height,d};}
+const lerp=(a,b,k)=>a+(b-a)*k;
+
+function drawVessel(dt,time){
+  const {w,h,d}=sizeCanvas(cv); const g=vctx; g.setTransform(d,0,0,d,0,0); g.clearRect(0,0,w,h);
+  if(VS.target){const k=Math.min(1,dt*2.2);VS.fill=lerp(VS.fill,VS.target.fill,k);VS.col=VS.col.map((c,i)=>lerp(c,VS.target.col[i],k));VS.op=lerp(VS.op,VS.target.op,k);VS.visc=lerp(VS.visc,VS.target.visc,k*.8);VS.temp=lerp(VS.temp,VS.target.temp,k*.7);VS.rpm=lerp(VS.rpm,VS.target.rpm,k);}
+  VS.pour=Math.max(0,VS.pour-dt*.55);
+  const bw=Math.min(w*.42,250), bh=Math.min(h*.58,260), bx=w*.5-bw/2, by=h*.86-bh;
+  // 작업대·핫플레이트
+  g.fillStyle='#1d242a';g.fillRect(0,h*.86+10,w,h);
+  const hot=Math.max(0,(VS.temp-30)/55);
+  g.fillStyle='rgb('+Math.round(40+150*hot)+','+Math.round(46+20*hot)+','+Math.round(52-10*hot)+')';g.fillRect(bx-14,h*.86,bw+28,10);
+  if(hot>.05){const gr=g.createLinearGradient(0,h*.86,0,h*.86-40);gr.addColorStop(0,'rgba(255,110,60,'+(.25*hot)+')');gr.addColorStop(1,'rgba(255,110,60,0)');g.fillStyle=gr;g.fillRect(bx-14,h*.86-40,bw+28,40);}
+  // 내용물
+  const fh=bh*.86*VS.fill, fy=by+bh-fh;
+  g.save(); g.beginPath(); g.moveTo(bx,by); g.lineTo(bx,by+bh-14); g.quadraticCurveTo(bx,by+bh,bx+14,by+bh); g.lineTo(bx+bw-14,by+bh); g.quadraticCurveTo(bx+bw,by+bh,bx+bw,by+bh-14); g.lineTo(bx+bw,by); g.clip();
+  if(VS.fill>.005){
+    const [r,gg,b]=VS.col.map(Math.round); const amp=(1-VS.visc)*Math.min(1,VS.rpm/500)*5+.6;
+    g.beginPath(); g.moveTo(bx,by+bh);
+    for(let x=0;x<=bw;x+=4){const yy=fy+Math.sin(x*.05+time*(1+VS.rpm/800))*amp*(1-Math.abs(x/bw-.5)*1.2)+(VS.rpm>100?Math.abs(x/bw-.5)*amp*1.6:0);g.lineTo(bx+x,yy);}
+    g.lineTo(bx+bw,by+bh); g.closePath();
+    g.fillStyle='rgba('+r+','+gg+','+b+','+Math.max(.18,VS.op)+')'; g.fill();
+    if(VS.op<.6){g.fillStyle='rgba(255,255,255,.05)';g.fillRect(bx,fy,bw*.15,fh);}
+    // 점도 표현: 점도 높을수록 표면 하이라이트 굵게
+    g.strokeStyle='rgba(255,255,255,'+(.15+.25*VS.visc)+')';g.lineWidth=1.5+2*VS.visc;g.beginPath();for(let x=0;x<=bw;x+=4){const yy=fy+Math.sin(x*.05+time*(1+VS.rpm/800))*amp*(1-Math.abs(x/bw-.5)*1.2)+(VS.rpm>100?Math.abs(x/bw-.5)*amp*1.6:0);x?g.lineTo(bx+x,yy):g.moveTo(bx+x,yy);}g.stroke();
+  }
+  g.restore();
+  // 비커 외곽
+  g.strokeStyle='rgba(200,225,240,.55)';g.lineWidth=2;g.beginPath();g.moveTo(bx-6,by-4);g.lineTo(bx,by);g.lineTo(bx,by+bh-14);g.quadraticCurveTo(bx,by+bh,bx+14,by+bh);g.lineTo(bx+bw-14,by+bh);g.quadraticCurveTo(bx+bw,by+bh,bx+bw,by+bh-14);g.lineTo(bx+bw,by);g.stroke();
+  g.fillStyle='rgba(200,225,240,.4)';g.font='500 10px IBM Plex Mono';for(let i=1;i<=4;i++){const yy=by+bh-bh*.86*i/4;g.fillRect(bx+bw-14,yy,10,1);}
+  // 교반기
+  if(VS.mixer!=='none'){
+    VS.ang+=dt*Math.min(VS.rpm,1500)/60*6.28*.5;
+    const cx=bx+bw/2, top=by-38, bot=by+bh-26;
+    g.strokeStyle='#9aa7b2';g.lineWidth=4;g.beginPath();g.moveTo(cx,top);g.lineTo(cx,bot);g.stroke();
+    g.fillStyle='#3a444d';g.fillRect(cx-22,top-26,44,26);g.fillStyle='#9aa7b2';g.font='500 10px IBM Plex Mono';g.textAlign='center';g.fillText(mixName(VS.mixer),cx,top-9);g.textAlign='left';
+    const c=Math.cos(VS.ang);
+    g.fillStyle='#b8c4ce';
+    if(VS.mixer==='paddle'||VS.mixer==='blade'){const L=(VS.mixer==='blade'?bw*.22:bw*.3)*c;g.fillRect(cx-Math.abs(L),bot-8,Math.abs(L)*2,VS.mixer==='blade'?6:14);}
+    else if(VS.mixer==='helix'){g.strokeStyle='#b8c4ce';g.lineWidth=3;g.beginPath();for(let t=0;t<=1;t+=.02){const yy=bot-t*bh*.55;const xx=cx+Math.sin(t*12+VS.ang)*bw*.28;t?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();}
+    else if(VS.mixer==='anchor'){g.strokeStyle='#b8c4ce';g.lineWidth=4;const L=bw*.42*c;g.beginPath();g.moveTo(cx-L,by+bh*.35);g.lineTo(cx-L,bot+8);g.lineTo(cx+L,bot+8);g.lineTo(cx+L,by+bh*.35);g.stroke();}
+    else if(VS.mixer==='homo'){g.fillStyle='#c9d4dd';g.fillRect(cx-16,bot-18,32,22);g.fillStyle='#2a3238';for(let i=0;i<4;i++){g.fillRect(cx-13+i*8+((VS.ang*3)%8),bot-14,3,14);}
+      if(VS.rpm>1500){g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=1;for(let i=0;i<6;i++){const a=VS.ang*2+i;g.beginPath();g.moveTo(cx+Math.cos(a)*20,bot-7+Math.sin(a)*5);g.lineTo(cx+Math.cos(a)*44,bot-7+Math.sin(a)*12);g.stroke();}}}
+  }
+  // 별도 용기
+  if(VS.side){
+    const sx=Math.max(14,bx-bw*.75), sy=by-40, sw2=Math.min(bw*.42,110), sh2=sw2*.85;
+    const sc=hexToRgb(VS.side.color); const lvl=sh2*.7*(VS.pour>0?.35+VS.pour*.65:.35);
+    g.fillStyle='rgba('+sc.join(',')+',.85)';g.fillRect(sx,sy+sh2-lvl,sw2,lvl);
+    g.strokeStyle='rgba(200,225,240,.55)';g.lineWidth=1.5;g.strokeRect(sx,sy,sw2,sh2);
+    g.fillStyle='#c9d3da';g.font='500 11px IBM Plex Sans KR';g.fillText(VS.side.label,sx,sy-6);
+    if(VS.side.temp>30){g.fillStyle='rgba(255,120,70,.6)';g.fillRect(sx-4,sy+sh2+2,sw2+8,4);}
+    if(VS.pour>0){g.strokeStyle='rgba('+sc.join(',')+','+(.9*Math.min(1,VS.pour*2))+')';g.lineWidth=5;g.beginPath();g.moveTo(sx+sw2,sy+6);g.quadraticCurveTo(sx+sw2+40,sy-10,bx+bw*.35,fy-4);g.stroke();}
+  } else if(VS.pour>0){
+    const cx=bx+bw*.3; g.strokeStyle='rgba(220,235,245,'+(.8*Math.min(1,VS.pour*2))+')';g.lineWidth=5;g.beginPath();g.moveTo(cx-30,by-50);g.quadraticCurveTo(cx-10,by-30,cx,fy-2);g.stroke();
+  }
+  // 성형 틀 (하이드로겔)
+  if(VS.cast){
+    VS.castFill=Math.min(1,(VS.castFill||0)+dt*.45);
+    const mx=14,mw=Math.max(120,bx-40),my=h*.86-34,mh=30;
+    g.fillStyle='#2a3238';g.fillRect(mx,my,mw,mh);g.strokeStyle='rgba(200,225,240,.5)';g.lineWidth=1.5;g.strokeRect(mx,my,mw,mh);
+    const n=Math.max(2,Math.floor(mw/58));const [r,gg,b]=VS.col.map(Math.round);
+    for(let i=0;i<n;i++){const cx=mx+mw*(i+.5)/n,cy=my+mh*.62;const f=VS.cast>1?1:Math.min(1,Math.max(0,VS.castFill*n-i));
+      g.beginPath();g.ellipse(cx,cy,22,10,0,Math.PI,0,false);g.ellipse(cx,cy-3,17,5,0,0,Math.PI,true);g.closePath();
+      g.fillStyle='rgba('+r+','+gg+','+b+','+(.25+.7*f)+')';g.fill();g.strokeStyle='rgba(255,255,255,.35)';g.stroke();
+      if(VS.cast===3){g.strokeStyle='rgba(95,209,193,.9)';g.setLineDash([3,3]);g.beginPath();g.ellipse(cx,cy-1,25,13,0,0,6.283);g.stroke();g.setLineDash([]);}}
+    g.fillStyle='#c9d3da';g.font='500 11px IBM Plex Sans KR';g.fillText(VS.cast===1?'패치 틀에 붓는 중':VS.cast===2?'틀에서 식히는 중 → 겔화':'재단(다이커팅)',mx,my-8);
+    if(VS.cast===1&&VS.castFill<1){g.strokeStyle='rgba('+r+','+gg+','+b+',.85)';g.lineWidth=5;g.beginPath();g.moveTo(bx+6,by+bh*.4);g.quadraticCurveTo(bx-30,by+bh*.5,mx+mw*Math.min(.95,VS.castFill+.1),my);g.stroke();}
+  }
+  // 온도계
+  const tx=bx+bw+34, ty=by, th=bh;
+  g.fillStyle='#232b31';g.fillRect(tx,ty,10,th);
+  const tf=Math.max(0,Math.min(1,VS.temp/100));g.fillStyle=VS.temp>45?'#ff7a4d':'#5fb3e6';g.fillRect(tx,ty+th*(1-tf),10,th*tf);
+  g.beginPath();g.arc(tx+5,ty+th+8,9,0,7);g.fill();
+  g.fillStyle='#8b959f';g.font='500 10px IBM Plex Mono';[25,40,75].forEach(v=>{const yy=ty+th*(1-v/100);g.fillRect(tx+12,yy,6,1);g.fillText(v+'°',tx+21,yy+3);});
+  // 수치
+  g.font='500 13px IBM Plex Mono';g.fillStyle='#e4e8ec';
+  const lines=[['온도',Math.round(VS.temp)+' °C'],['교반',VS.mixer==='none'?'—':Math.round(VS.rpm).toLocaleString()+' rpm'],['점도(개략)','']];
+  lines.forEach((l,i)=>{g.fillStyle='#8b959f';g.font='500 11px IBM Plex Sans KR';g.fillText(l[0],w-150,26+i*22);g.fillStyle='#e4e8ec';g.font='500 13px IBM Plex Mono';g.fillText(l[1],w-80,26+i*22);});
+  g.fillStyle='#232b31';g.fillRect(w-80,26+2*22-9,64,8);g.fillStyle='#5fd1c1';g.fillRect(w-80,26+2*22-9,64*VS.visc,8);
+}
+
+function drawMicro(dt,time){
+  const {w,h,d}=sizeCanvas(cmc); const g=mctx; g.setTransform(d,0,0,d,0,0); g.clearRect(0,0,w,h);
+  const k=Math.min(1,dt*1.8);
+  ['mol','ha','mic','poly','expand','drop','dr','lam','part','agg','soap','cryst','coal'].forEach(f=>{MS[f]=lerp(MS[f]||0,MT[f]||0,k);});
+  const R=Math.min(w,h-24)/2-14, cx=w/2, cy=(h-18)/2+6;
+  g.save(); g.beginPath(); g.arc(cx,cy,R,0,7); g.clip();
+  g.fillStyle=MS.bg==='oil'?'#3a2c12':'#0f2735'; g.fillRect(cx-R,cy-R,2*R,2*R);
+  const P=(p,j)=>[cx-R+p.x*2*R+Math.sin(time*.8+p.a)*j, cy-R+p.y*2*R+Math.cos(time*.7+p.a*1.3)*j];
+  // 라멜라 배경
+  if(MS.lam>.02){g.strokeStyle='rgba(240,230,200,'+(.22*MS.lam)+')';g.lineWidth=1.2;for(let i=-20;i<20;i++){g.beginPath();for(let x=-R;x<=R;x+=6){const yy=cy+i*9+Math.sin((x+i*13)*.05)*4;x===-R?g.moveTo(cx+x,yy):g.lineTo(cx+x,yy);}g.stroke();}}
+  // 고분자
+  if(MS.poly>.02){
+    const n=Math.round(16*Math.min(1,MS.poly));
+    for(let i=0;i<n;i++){const p=PTS[i+40];const [x,y]=P(p,1.5);
+      if(MS.pkind==='carbomer'){const r=6+28*MS.expand;g.fillStyle='rgba(123,211,137,'+(.14+.1*(1-MS.expand))+')';g.strokeStyle='rgba(123,211,137,.55)';g.lineWidth=1;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.stroke();
+        if(MS.expand<.5){g.beginPath();for(let t=0;t<16;t++){const a=t*1.7+p.a;g.lineTo(x+Math.cos(a)*r*.8,y+Math.sin(a)*r*.8);}g.stroke();}}
+      else{const L=20+120*MS.expand;g.strokeStyle='rgba(150,225,160,.75)';g.lineWidth=2.2;g.beginPath();for(let t=0;t<=1;t+=.05){const xx=x+Math.cos(p.a)*L*(t-.5)+Math.sin(t*9+time*.5+p.a)*(MS.expand>.5?4:8*(1-MS.expand)+3);const yy=y+Math.sin(p.a)*L*(t-.5)+Math.cos(t*7+p.a)*3;t?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();}
+    }
+  }
+  if(MS.ha>.02){g.strokeStyle='rgba(200,170,240,.6)';g.lineWidth=1.2;const n=Math.round(10*MS.ha);for(let i=0;i<n;i++){const p=PTS[i+70];const [x,y]=P(p,1);g.beginPath();for(let t=0;t<=1;t+=.04){const xx=x+Math.cos(p.a)*90*(t-.5)+Math.sin(t*14+time+p.a)*6;const yy=y+Math.sin(p.a)*90*(t-.5)+Math.cos(t*11+p.a)*6;t?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();}}
+  // 방울
+  if(MS.drop>.02){
+    const n=Math.round(26*MS.drop); const oilBg=MS.bg==='oil';
+    for(let i=0;i<n;i++){const p=PTS[i+100];const [x,y]=P(p,1.2);
+      let r=(5+24*MS.dr)*(.65+.7*p.s); if(MS.coal>.02&&i%4===0) r*=1+1.4*MS.coal; if(MS.coal>.02&&i%4===1) r*=1-.6*MS.coal;
+      if(MS.lam>.02){g.strokeStyle='rgba(240,230,200,'+(.5*MS.lam)+')';g.lineWidth=1;for(let q=1;q<=3;q++){g.beginPath();g.arc(x,y,r+q*3,0,7);g.stroke();}}
+      const gr=g.createRadialGradient(x-r*.3,y-r*.3,1,x,y,r);
+      if(oilBg){gr.addColorStop(0,'rgba(190,230,255,.95)');gr.addColorStop(1,'rgba(80,160,220,.85)');}else{gr.addColorStop(0,'rgba(255,230,160,.95)');gr.addColorStop(1,'rgba(230,160,60,.85)');}
+      g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,7);g.fill();
+      if(!oilBg&&cur.id==='gelcream'){g.strokeStyle='rgba(123,211,137,.9)';g.lineWidth=1;for(let q=0;q<6;q++){const a=q*1.05+p.a;g.beginPath();g.moveTo(x+Math.cos(a)*r*.6,y+Math.sin(a)*r*.6);g.lineTo(x+Math.cos(a)*(r+7),y+Math.sin(a)*(r+7));g.stroke();}}
+    }
+  }
+  // 무기 입자
+  if(MS.part>.02){const n=Math.round(60*Math.min(1.4,MS.part));g.fillStyle='rgba(245,245,245,.92)';
+    for(let i=0;i<n;i++){const p=PTS[i+130];let [x,y]=P(p,.6);const c=PTS[(i%7)+5];const [ax,ay]=[cx-R*.7+c.x*R*1.4,cy-R*.7+c.y*R*1.4];x=lerp(x,ax+(p.s-.5)*14,MS.agg);y=lerp(y,ay+(p.a/6.28-.5)*14,MS.agg);g.beginPath();g.arc(x,y,2.6,0,7);g.fill();}}
+  // 비누 미셀
+  if(MS.soap>.02){const n=Math.round(28*MS.soap);for(let i=0;i<n;i++){const p=PTS[i+190];const [x,y]=P(p,1.4);g.fillStyle='rgba(111,208,232,.8)';for(let q=0;q<10;q++){const a=q*.628;g.beginPath();g.arc(x+Math.cos(a)*7,y+Math.sin(a)*7,1.6,0,7);g.fill();}g.fillStyle='rgba(240,200,110,.7)';g.beginPath();g.arc(x,y,4,0,7);g.fill();}}
+  if(MS.cryst>.02){const n=Math.round(22*MS.cryst);for(let i=0;i<n;i++){const p=PTS[i+220];const [x,y]=P(p,.3);g.save();g.translate(x,y);g.rotate(p.a);const sh=.55+.45*Math.sin(time*1.5+p.a*3);g.fillStyle='rgba(255,255,255,'+(.35+.4*sh)*MS.cryst+')';g.fillRect(-16*MS.cryst,-3,32*MS.cryst,6);g.restore();}}
+  // 작은 분자
+  if(MS.mol>.02){const n=Math.round(110*MS.mol);g.fillStyle='rgba(120,220,200,.75)';for(let i=0;i<n;i++){const p=PTS[i%PTS.length];const x=cx-R+((p.x+time*.01*(p.s-.5))%1+1)%1*2*R;const y=cy-R+((p.y+time*.012*(p.a/6.28-.5))%1+1)%1*2*R;g.fillRect(x,y,2,2);}}
+  // 미셀
+  if(MS.mic>.02){const n=Math.round(22*MS.mic);for(let i=0;i<n;i++){const p=PTS[i+10];const [x,y]=P(p,2);g.fillStyle='rgba(166,227,111,.9)';for(let q=0;q<9;q++){const a=q*.698+time*.3;g.beginPath();g.arc(x+Math.cos(a)*6,y+Math.sin(a)*6,1.5,0,7);g.fill();}g.fillStyle='rgba(240,190,90,.85)';g.beginPath();g.arc(x,y,3,0,7);g.fill();}}
+  g.restore();
+  g.strokeStyle='rgba(200,225,240,.5)';g.lineWidth=2;g.beginPath();g.arc(cx,cy,R,0,7);g.stroke();
+  if(MS.scale){g.fillStyle='#c9d3da';g.fillRect(cx+R*.35,cy+R*.8,R*.35,3);g.font='500 11px IBM Plex Mono';g.fillText(MS.scale,cx+R*.35,cy+R*.8-6);}
+  g.font='500 11px IBM Plex Sans KR';g.fillStyle='#8b959f';g.fillText(MS.bg==='oil'?'연속상: 오일':'연속상: 물',cx-R+4,cy-R+14);
+}
+
+/* ═════════════ 모드·제품 전환 ═════════════ */
+function setMode(m){
+  mode=m; document.getElementById('m3d').classList.toggle('on',m==='3d'); document.getElementById('mproc').classList.toggle('on',m==='proc');
+  document.getElementById('v3d').style.display=m==='3d'?'block':'none'; document.getElementById('vproc').style.display=m==='proc'?'flex':'none';
+  document.getElementById('hint').textContent=m==='3d'?'원료를 누르면 정보, 더블클릭하거나 상 이름표를 누르면 그 상으로 확대됩니다.':'단계를 넘기며 투입 순서, 온도, 교반에 따라 구조가 바뀌는 모습을 보세요.';
+  if(m==='proc') gotoStep(stepIdx);
+}
+document.getElementById('m3d').onclick=()=>setMode('3d');
+document.getElementById('mproc').onclick=()=>setMode('proc');
+function setProduct(id){
+  cur=ALL().find(p=>p.id===id)||PRODUCTS.find(p=>p.id==='gelcream'); sel=null; stopPlay(); oneMonth=false; creamRpm=4000;
+  renderTabs();
+  Object.assign(VS,{fill:0,op:.2,visc:0,temp:25,rpm:0,mixer:'none',pour:0,side:null,target:null});
+  renderPanel(); build3d(); stepIdx=0; gotoStep(0); document.getElementById('panel').scrollTop=0;
+  try{history.replaceState(null,'','#'+id);}catch(e){}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')select(null);});
+
+/* ═════════════ 직접 추가: 자료 기반 AI 분석 ═════════════ */
+const TYPES=['토너','에센스','세럼','젤','젤크림','로션','크림','선크림','클렌징 폼','앰플','미스트','클렌징 오일·밤','마스크팩','기타'];
+const fName=document.getElementById('fName'),fType=document.getElementById('fType'),fInci=document.getElementById('fInci'),fImg=document.getElementById('fImg'),docList=document.getElementById('docList');
+const runBtn=document.getElementById('runBtn'),stopBtn=document.getElementById('stopBtn'),runStatus=document.getElementById('runStatus');
+fType.innerHTML='<option value="">자동 판단</option>'+TYPES.map(t=>'<option>'+t+'</option>').join('');
+let imgMax=0, runCtl=null, loadedHash=false;
+const MIXERS=['none','paddle','helix','homo','blade','anchor'];
+const clamp=(v,a,b,d)=>{v=Number(v);return isFinite(v)?Math.min(b,Math.max(a,v)):d;};
+const hexOk=(h,d)=>/^#[0-9a-fA-F]{6}$/.test(h||'')?h:d;
+const normTxt=s=>String(s||'').toLowerCase().replace(/[\s\u00a0"“”'‘’`·•,.;:()\[\]{}\-–—_/\\|]+/g,'');
+
+function normalizeProduct(raw,meta){
+  const id=meta.id, srcList=[];
+  const inciKey=id+'~inci'; SRC[inciKey]={t:'입력한 전성분'+(meta.images?' (사진 '+meta.images+'장 포함)':''),u:''}; srcList.push({key:inciKey,t:SRC[inciKey].t,u:''});
+  meta.docs.forEach((d,i)=>{const k=id+'~d'+i;SRC[k]={t:'입력 자료 '+(i+1)+': '+(d.label||'제목 없음'),u:/^https?:\/\//i.test(d.url||'')?d.url:''};srcList.push({key:k,t:SRC[k].t,u:SRC[k].u});});
+  const hay=meta.docTexts.map(normTxt);
+  let down=0; const counts={doc:0,inci:0,est:0};
+  const ev=(tag,ref,quote)=>{
+    tag=['doc','inci','est'].includes(tag)?tag:'est';
+    if(tag==='doc'){
+      const q=String(quote||'').slice(0,240), nq=normTxt(q); const r=Number.isInteger(ref)&&ref>=0&&ref<hay.length?ref:-1;
+      let at=-1; if(nq.length>=6){ if(r>=0&&hay[r].includes(nq)) at=r; else at=hay.findIndex(h=>h.includes(nq)); }
+      if(at>=0){counts.doc++;return {tag:'doc',src:id+'~d'+at,quote:q};}
+      down++;counts.est++;return {tag:'est',src:null,quote:'',down:true};
+    }
+    counts[tag]++; return {tag,src:tag==='inci'?inciKey:null,quote:''};
+  };
+  const lk=raw.look||{};
+  const p={id,custom:true,name:String(raw.name||meta.name).slice(0,60),en:String(raw.en||'').slice(0,60),struct:String(raw.struct||'분석 결과').slice(0,40),
+    container:PROFILES[raw.container]?raw.container:'jar',look:{color:parseInt(hexOk(lk.color,'#eeeeee').slice(1),16),opacity:clamp(lk.opacity,0,1,.8)},
+    summary:String(raw.summary||'').slice(0,400),fnote:String(raw.fnote||'').slice(0,400)};
+  p.props=(Array.isArray(raw.props)?raw.props:[]).slice(0,8).map(r=>{const e=ev(r.tag,r.ref,r.quote);return [String(r.k||'').slice(0,30),String(r.v||'').slice(0,140),e.tag,e.src,e.quote];});
+  const letters='ABCDEFGHIJ', kmap={};
+  p.phases=(Array.isArray(raw.phases)?raw.phases:[]).slice(0,8).map((ph,pi)=>{
+    kmap[String(ph.k||letters[pi])]=letters[pi];
+    return {k:letters[pi],name:String(ph.name||'상').slice(0,30),kind:KIND[ph.kind]?ph.kind:'water',
+      items:(Array.isArray(ph.items)?ph.items:[]).slice(0,14).map(it=>{
+        const e=ev(it.tag,it.ref,it.quote); let pct=it.pct==='qs'?'qs':Number(it.pct), range=null;
+        const rg=String(it.range||'').match(/([\d.]+)\s*[–~\-]\s*([\d.]+)/);
+        if(pct!=='qs'&&e.tag!=='doc'&&rg){range=rg[1]+'–'+rg[2];if(!isFinite(pct))pct=(+rg[1]+ +rg[2])/2;}
+        if(pct!=='qs'&&(!isFinite(pct)||pct<0)) pct=.5;
+        if(e.down&&pct!=='qs'&&!range) range=fmt(pct);
+        return {form:FORM[it.form]?it.form:undefined,inci:String(it.inci||'?').slice(0,140),ko:it.ko?String(it.ko).slice(0,60):null,pct,range,rest:!!it.rest,fn:String(it.fn||'').slice(0,40),note:String(it.note||'').slice(0,320),tag:e.tag,src:e.src,quote:e.quote,downgraded:!!e.down};
+      })};
+  }).filter(ph=>ph.items.length);
+  let rest=null,tot=0; p.phases.forEach(ph=>ph.items.forEach(it=>{if(it.rest&&!rest)rest=it;else if(typeof it.pct==='number')tot+=it.pct;}));
+  if(rest){rest.pct={to:Math.max(0,+(100-tot).toFixed(2))};rest.range=null;}
+  p.overTotal=tot>100.5;
+  p.steps=(Array.isArray(raw.steps)?raw.steps:[]).slice(0,10).map(s=>{
+    const e=ev(s.tag,s.ref,s.quote), m=s.micro||{};
+    const micro={bg:m.bg==='oil'?'oil':'water',pkind:m.pkind==='xanthan'?'xanthan':'carbomer',scale:String(m.scale||'').slice(0,12)};
+    ['mol','ha','mic','poly','expand','drop','dr','lam','part','agg','soap','cryst'].forEach(f=>{const v=clamp(m[f],0,1.4,0);if(v)micro[f]=v;});
+    if(micro.drop&&!micro.dr) micro.dr=.4;
+    const mixer=MIXERS.includes(s.mixer)?s.mixer:'paddle';
+    return {t:String(s.t||'단계').slice(0,40),add:(Array.isArray(s.add)?s.add:[]).map(k=>kmap[String(k)]).filter(Boolean),
+      side:s.side&&s.side.label?{label:String(s.side.label).slice(0,24),color:hexOk(s.side.color,'#e8e8e8'),temp:clamp(s.side.temp,0,100,25)}:null,
+      temp:clamp(s.temp,0,100,25),mixer,rpm:mixer==='none'?0:clamp(s.rpm,0,20000,300),time:String(s.time||'—').slice(0,24),ph:s.ph?String(s.ph).slice(0,20):'',
+      desc:String(s.desc||'').slice(0,320),why:String(s.why||'').slice(0,420),tag:e.tag,src:e.src,quote:e.quote,
+      color:hexOk(s.color,'#e8eef2'),op:clamp(s.op,0,1,.5),visc:clamp(s.visc,0,1,.2),micro};
+  });
+  const added=new Set(); p.steps.forEach(s=>s.add.forEach(k=>added.add(k)));
+  const miss=p.phases.map(ph=>ph.k).filter(k=>!added.has(k));
+  if(!p.steps.length||miss.length){p.steps.push({t:'나머지 상 투입',add:miss,side:null,temp:25,mixer:'paddle',rpm:300,time:'—',ph:'',desc:'분석 결과의 공정 단계에 빠진 상을 마지막에 넣었습니다.',why:'공정 순서가 자료에 없어 페이지가 보완한 단계입니다.',tag:'est',src:null,quote:'',color:hexOk(lk.color,'#eeeeee'),op:p.look.opacity,visc:.5,micro:{bg:'water',mol:.3,scale:''}});counts.est++;}
+  p.design=(Array.isArray(raw.design)?raw.design:[]).slice(0,6).map(d=>{const e=ev(d.tag,d.ref,d.quote);return [String(d.text||'').slice(0,320),e.tag,e.src,e.quote];});
+  p.caveats=(Array.isArray(raw.caveats)?raw.caveats:[]).slice(0,6).map(c=>String(c).slice(0,260));
+  const lkg=raw.linkage||{}; p.linkage={level:['confirmed','stated','unclear','none'].includes(lkg.level)?lkg.level:(meta.docs.length?'unclear':'none'),reason:String(lkg.reason||'').slice(0,260)};
+  p.counts=counts;p.down=down;p.srcList=srcList;
+  p.meta={name:meta.name,type:meta.type,inci:meta.inci.slice(0,4000),docs:meta.docs,images:meta.images,createdAt:meta.createdAt};
+  p.phases.forEach(ph=>{ph.color=KIND[ph.kind].c;});
+  return p;
+}
+function hydrate(data){
+  try{const p=JSON.parse(JSON.stringify(data.product));if(!p||!Array.isArray(p.phases)||!p.phases.length)return null;
+    (p.srcList||[]).forEach(s=>{SRC[s.key]={t:s.t,u:s.u||''};});p.phases.forEach(ph=>{ph.color=(KIND[ph.kind]||KIND.water).c;});p.custom=true;p.session=false;return p;}catch(e){return null;}
+}
+const LINK={confirmed:'자료에서 이 제품과의 연결이 확인됨',stated:'자료가 이 제품을 언급하지만 처방 일치는 확인 안 됨',unclear:'연결 근거 없음. 특허 실시예 처방이 이 제품 처방이라고 볼 수 없음',none:'특허·논문 자료를 넣지 않음'};
+function customBox(p){
+  const c=p.counts||{doc:0,inci:0,est:0}, d=p.meta&&p.meta.createdAt?new Date(p.meta.createdAt).toLocaleDateString('ko-KR'):'';
+  return '<div class="aibox"><div><b>AI 분석 결과</b> · 입력 자료 기반 · '+esc(d)+'</div>'+
+  '<div>근거 '+chip('doc')+' '+c.doc+' · '+chip('inci')+' '+c.inci+' · '+chip('est')+' '+c.est+(p.down?' · 인용 불일치로 추정 처리 '+p.down:'')+'</div>'+
+  '<div><b style="color:var(--ink)">특허·논문과 제품의 연결</b> · '+esc(LINK[p.linkage.level])+(p.linkage.reason?'. '+esc(p.linkage.reason):'')+'</div>'+
+  (p.overTotal?'<div style="color:#f2a3a3">함량 합계가 100%를 넘습니다. 추정 함량을 확인하세요.</div>':'')+
+  (p.caveats&&p.caveats.length?'<ul>'+p.caveats.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
+  '<div class="actions"><button class="btn primary" data-act="verify">채팅 검증 요청문</button><button class="btn" data-act="redo">자료 바꿔 다시 분석</button>'+((p.session||p.local||(isOwner&&dbApi))?'<button class="btn" data-act="del">삭제</button>':'')+'</div>'+
+  (p.session?'<div class="small">이 결과는 저장되지 않았습니다. 창을 닫으면 사라집니다.</div>':(p.local?'<div class="small">이 브라우저에만 저장되어 있습니다. 다른 기기로 옮기려면 + 제품 추가 창의 백업 내보내기를 쓰세요.</div>':''))+'</div>';
+}
+function bindCustomBox(p){
+  document.querySelectorAll('#phead [data-act]').forEach(b=>{
+    b.onclick=async()=>{
+      const a=b.dataset.act;
+      if(a==='verify') openCopy(verifyText(p));
+      if(a==='redo') openAdd(p.meta);
+      if(a==='del'){
+        if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='한 번 더 누르면 삭제';return;}
+        if(p.session){CUSTOM_SESSION=CUSTOM_SESSION.filter(x=>x.id!==p.id);setProduct('gelcream');}
+        else if(p.local){lsRemove(p.id);CUSTOM_LOCAL=CUSTOM_LOCAL.filter(x=>x.id!==p.id);setProduct('gelcream');}
+        else{b.disabled=true;try{await dbApi.collection('library').doc(p.id).delete();CUSTOM_DB=CUSTOM_DB.filter(x=>x.id!==p.id);setProduct('gelcream');}catch(e){b.disabled=false;b.textContent='삭제 실패, 다시 시도';}}
+      }
+    };
+  });
+}
+function verifyText(p){
+  const m=p.meta||{}; const est=[];p.phases.forEach(ph=>ph.items.forEach(it=>{if(it.tag==='est')est.push(it.inci+(it.range?' ('+it.range+'%)':''));}));
+  return '[화장품 제형 분해도] 페이지에서 만든 "'+p.name+'" 분석을 웹에서 검증해 줘. 전성분, 관련 특허(KIPRIS·Google Patents), 논문, 회사 발표를 찾아 대조하고, 확인된 내용과 출처로 이 제품 탭을 다시 만들어 줘. 확인 안 되는 수치는 추정으로 남겨 줘.\n\n'+
+  '제품명: '+(m.name||p.name)+'\n유형: '+(m.type||'자동 판단')+'\n전성분: '+(m.inci||'(입력 안 함)')+'\n'+
+  '입력했던 자료: '+((m.docs&&m.docs.length)?m.docs.map((d,i)=>(i+1)+') '+(d.label||'제목 없음')+(d.url?' '+d.url:'')).join(' / '):'없음')+'\n'+
+  '특허·논문과 제품의 연결(페이지 판단): '+LINK[p.linkage.level]+(p.linkage.reason?' - '+p.linkage.reason:'')+'\n'+
+  '페이지 분석에서 추정으로 남은 원료: '+(est.slice(0,30).join(', ')||'없음');
+}
+const copyModal=document.getElementById('copyModal');
+const COPY_DEF={t:'채팅에서 검증 요청하기',d:'아래 요청문을 Claude 채팅에 붙여넣으면, Claude가 웹에서 전성분·특허·논문·회사 발표를 찾아 이 분석을 검증하고 출처가 붙은 탭으로 다시 만들어 줍니다.'};
+let copyFile=null;
+function openCopy(t,title,desc,file){document.getElementById('copyText').value=t;document.getElementById('copyNote').textContent='';document.getElementById('copyTitle').textContent=title||COPY_DEF.t;document.getElementById('copyDesc').textContent=desc||COPY_DEF.d;copyFile=file||null;document.getElementById('dlBtn').hidden=!file;copyModal.hidden=false;}
+let dlApi=null;
+document.getElementById('dlBtn').onclick=async()=>{const note=document.getElementById('copyNote');if(dlApi){try{await dlApi.save({filename:copyFile||'backup.json',data:document.getElementById('copyText').value});note.textContent='저장했습니다.';}catch(e){note.textContent='저장하지 않았습니다. 복사해서 저장해도 됩니다.';}return;}try{const b=new Blob([document.getElementById('copyText').value],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=copyFile||'backup.json';document.body.appendChild(a);a.click();a.remove();document.getElementById('copyNote').textContent='저장을 시도했습니다. 파일이 안 생기면 복사해서 직접 저장하세요.';}catch(e){document.getElementById('copyNote').textContent='이 화면에서는 파일 저장이 막혀 있습니다. 복사해서 저장하세요.';}};
+document.getElementById('copyClose').onclick=()=>{copyModal.hidden=true;};
+document.getElementById('copyBtn').onclick=async()=>{const ta=document.getElementById('copyText');try{await navigator.clipboard.writeText(ta.value);document.getElementById('copyNote').textContent='복사했습니다. 채팅창에 붙여넣으세요.';}catch(e){ta.focus();ta.select();document.getElementById('copyNote').textContent='자동 복사가 막혀 있어 전체 선택해 두었습니다. Ctrl+C(⌘C)로 복사하세요.';}};
+
+const addModal=document.getElementById('addModal');
+function status(t,cls){runStatus.textContent=t;runStatus.className='status'+(cls?' '+cls:'');}
+function addDocItem(d){
+  d=d||{}; const el=document.createElement('div'); el.className='docitem';
+  el.innerHTML='<div class="docrow"><label class="fld">출처 (특허번호·논문 제목 등)<input type="text" class="dl" placeholder="예: KR 10-2345678, Kim et al. 2020"></label><label class="fld">링크 (선택)<input type="url" class="du" placeholder="https://"></label><button class="btn dx" type="button">삭제</button></div>'+
+   '<label class="fld">본문 (실시예 처방, 제조 방법 부분이 가장 중요합니다)<textarea class="dt" rows="5"></textarea></label>'+
+   '<div class="docrow" style="grid-template-columns:auto 1fr"><input type="file" class="df" accept=".pdf,.txt,application/pdf,text/plain"><span class="small dn">'+(d.chars?'이전 분석 때 '+d.chars.toLocaleString()+'자. 본문은 저장하지 않으므로 다시 넣어 주세요.':'')+'</span></div>';
+  el.querySelector('.dl').value=d.label||''; el.querySelector('.du').value=d.url||'';
+  el.querySelector('.dx').onclick=()=>el.remove();
+  el.querySelector('.df').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return; const note=el.querySelector('.dn'); note.textContent='읽는 중…';
+    try{
+      let t=/\.pdf$/i.test(f.name)||f.type==='application/pdf'?await pdfText(f,n=>{note.textContent=n+'쪽 읽는 중…';}):await f.text();
+      t=t.replace(/[ \t]+/g,' ').trim();
+      el.querySelector('.dt').value=t; if(!el.querySelector('.dl').value) el.querySelector('.dl').value=f.name.replace(/\.(pdf|txt)$/i,'');
+      note.textContent=t.length<300?'글자가 거의 없습니다 ('+t.length+'자). 스캔 이미지 PDF라면 본문을 직접 붙여넣어 주세요.':t.length.toLocaleString()+'자를 읽었습니다.'+(t.length>60000?' 앞 60,000자만 분석에 씁니다.':'');
+    }catch(err){note.textContent='파일을 읽지 못했습니다. 본문을 직접 붙여넣어 주세요.';}
+  };
+  docList.appendChild(el);
+}
+document.getElementById('addDoc').onclick=()=>addDocItem();
+function openAdd(prefill){
+  prefill=prefill||{}; fName.value=prefill.name||''; fType.value=prefill.type||''; fInci.value=prefill.inci||''; fImg.value=''; docList.innerHTML='';
+  (prefill.docs&&prefill.docs.length?prefill.docs:[{}]).forEach(d=>addDocItem(d));
+  status(prefill.name?'이전 입력을 불러왔습니다. 자료 본문을 다시 넣거나 고친 뒤 분석하세요.':'제품명과 전성분 또는 자료를 넣고 분석을 시작하세요.');
+  addModal.hidden=false; fName.focus();
+}
+function closeAdd(){addModal.hidden=true;}
+document.getElementById('addClose').onclick=()=>{if(runCtl)runCtl.abort();closeAdd();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!copyModal.hidden)copyModal.hidden=true;else if(!addModal.hidden&&!runCtl)closeAdd();}});
+
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', PDFW='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+function loadScript(src){return new Promise((res,rej)=>{if(document.querySelector('script[src="'+src+'"]'))return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+async function pdfText(file,onPage){
+  await loadScript(PDFW); await loadScript(PDFJS);
+  const lib=window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc=PDFW;
+  const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise; let out='';
+  for(let i=1;i<=Math.min(doc.numPages,80);i++){onPage&&onPage(i);const pg=await doc.getPage(i);const tc=await pg.getTextContent();out+=tc.items.map(t=>t.str).join(' ')+'\n';}
+  return out;
+}
+
+function buildPrompt(name,type,inci,docs,nImg,external){
+  const schema='{"name":"제품명","en":"영문명 또는 빈 문자열","struct":"제형 구조 한 줄(예: O/W 에멀전 + 카보머 겔)","container":"jar","look":{"color":"#f4f2ee","opacity":0.9},'+
+  '"summary":"제형을 두 문장으로","fnote":"처방표 해설 한 문장(함량 근거가 무엇인지)",'+
+  '"inci_read":"사진에서 읽은 전성분(사진이 없으면 빈 문자열)",'+
+  '"linkage":{"level":"confirmed|stated|unclear|none","reason":"판단 이유"},'+
+  '"props":[{"k":"구조","v":"...","tag":"est"},{"k":"pH","v":"5.5","tag":"doc","ref":0,"quote":"문서에서 그대로 복사한 구절"}],'+
+  '"phases":[{"k":"A","name":"수상","kind":"water","items":[{"inci":"Water","ko":"정제수","rest":true,"fn":"용매","form":"water","tag":"inci"},{"inci":"Glycerin","ko":"글리세린","pct":5,"range":"3–7","fn":"보습제","form":"humectant","note":"전성분 2번째, 통상 3–7%","tag":"est"}]}],'+
+  '"steps":[{"t":"수상 가열","add":["A"],"side":null,"temp":75,"mixer":"paddle","rpm":300,"time":"—","ph":"","desc":"무엇을 하는지","why":"왜 그렇게 하는지","tag":"est","color":"#dceef6","op":0.25,"visc":0.05,"micro":{"bg":"water","mol":0.3,"scale":"≈ 10 µm"}}],'+
+  '"design":[{"text":"이 제형 설계의 핵심 포인트","tag":"est"}],"caveats":["분석의 한계나 확인이 필요한 점"]}';
+  let s='너는 화장품 처방·공정 분석가다. 아래 [입력]만 근거로 제품 하나를 "상별 분해도" JSON으로 만든다. 너는 웹 검색을 할 수 없다.\n\n'+
+  '근거 규칙 (가장 중요):\n'+
+  '- 모든 주장·수치에 tag를 붙인다. "doc" = 입력 문서 본문에 명시됨. "inci" = 전성분 목록(텍스트 또는 사진)에서 확인됨(성분의 존재와 표기 순서만). "est" = 일반적인 처방 지식에 의한 추정.\n'+
+  '- tag가 "doc"이면 ref(입력 문서 번호, 0부터)와 quote(그 문서 본문에서 글자 그대로 복사한 25단어 이하 구절)를 반드시 넣는다. 그대로 복사할 수 없으면 "est"로 쓴다. 페이지가 quote를 본문과 대조해 없으면 추정으로 바꾼다.\n'+
+  '- 함량(%)은 문서에 명시된 경우에만 pct 숫자 + tag "doc". 그 외에는 range("1–3" 형식)와 그 중간값 pct를 넣고 tag "est". 추정을 확정값처럼 쓰지 않는다.\n'+
+  '- 전성분은 함량이 많은 순으로 적지만 1% 이하 성분과 착향제는 순서가 자유롭다. 이 점을 감안해 범위를 추정하고 note에 근거(예: "전성분 3번째")를 적는다.\n'+
+  '- 특허·논문의 실시예 처방이 이 제품의 실제 처방이라는 근거(제품명·특허번호 언급, 회사 발표 등)가 입력에 없으면 linkage.level을 "unclear"로 하고, 그 수치를 쓸 때는 note에 "특허 실시예 값"이라고 밝힌다. 문서가 없으면 "none".\n'+
+  '- 정제수처럼 나머지를 채우는 성분 하나에만 rest:true를 넣는다.\n'+
+  '- 문서에 없는 공정 조건(온도, rpm, 시간, 투입 순서)은 이 제형에 통상적인 조건으로 추정하고 tag "est".\n'+
+  '- 전성분에 있는 성분은 빠짐없이 어느 상에든 넣는다(최대 상당 14개, 넘치면 비슷한 추출물을 "기타 추출물"로 묶고 note에 성분명을 나열).\n\n'+
+  '출력: 아래 형태의 JSON 객체 하나만. 설명 문장 없이. 모든 문장은 한국어, 문자열은 140자 이내.\n'+schema+'\n\n'+
+  '허용 값: form(3D 모양, 성분의 물리적 성질) = water|humectant|oil|solidfat(고형 지방·왁스·지방산·지방알코올)|surfactant(유화제·계면활성제·가용화제)|polymer(고분자·점증제)|particle(분체·무기 입자)|crystal(분말 활성 성분)|ion(pH 조정·킬레이트·염)|preservative|fragrance|extract(추출물·기타 활성)|alcohol. container = bottle|dropper|jar|pump|tube. kind = water(수상)|active(활성·보습)|solub(가용화)|poly(고분자)|oil(유상)|emul(유화제)|cool(냉각상)|ph(중화·pH)|powder(분체)|surf(계면활성제). mixer = none|paddle|helix|homo|blade|anchor. micro.bg = water|oil (연속상). micro.pkind = carbomer|xanthan.\n'+
+  'micro의 0~1 값: mol 작은 분자, ha 히알루론산 같은 긴 사슬, mic 미셀, poly 고분자 양, expand 고분자 팽윤 정도, drop 방울 양, dr 방울 크기, lam 라멜라 겔, part 무기 입자, agg 입자 응집, soap 비누 미셀, cryst 결정. 해당 없는 값은 빼라.\n'+
+  '각 step은 그 단계가 끝난 시점의 탱크 상태다: color(내용물 색 #hex), op(불투명도 0~1), visc(점도 개략 0~1), add(이 단계에 탱크로 투입하는 상의 k 배열), side(별도 용기에서 미리 준비하면 {"label","color","temp"}, 아니면 null). 상은 2~7개, 단계는 3~9개. 모든 상은 어느 단계에선가 add에 들어가야 한다.\n\n'+
+  '[입력]\n제품명: '+name+'\n사용자가 지정한 유형: '+(type||'자동 판단')+'\n'+
+  '전성분 텍스트: '+(inci||'(없음)')+'\n'+
+  '첨부 이미지: '+(external?'이 대화에 제품 포장의 전성분 사진이 첨부되어 있으면 읽어서 inci_read에 적고, 사진에서 읽은 성분도 tag "inci"로 쓴다. 첨부가 없으면 무시한다. 웹 검색 결과는 근거(doc)로 쓰지 말고 est로만 쓴다.':(nImg?nImg+'장. 제품 포장의 전성분 사진일 수 있다. 읽은 전성분을 inci_read에 적고, 사진에서 읽은 성분도 tag "inci"로 쓴다.':'없음'))+'\n';
+  docs.forEach((d,i)=>{s+='\n[입력 문서 '+i+'] 출처: '+(d.label||'제목 없음')+(d.url?' ('+d.url+')':'')+'\n본문:\n'+(d.text||'(본문 없음)')+'\n';});
+  if(!docs.length) s+='\n입력 문서: 없음\n';
+  return s;
+}
+function errMsg(e){
+  const c=e&&e.code;
+  if(c==='not_granted'||c==='sampling_disabled'||c==='not_declared'||c==='capability_disabled'||c==='capability_removed') return 'Claude 사용이 허가되지 않았거나 이 화면에서 쓸 수 없어 분석할 수 없습니다.';
+  return ({rate_limited:'요청이 많거나 사용 한도에 도달했습니다. 잠시 뒤 다시 시도해 주세요.',prompt_too_large:'자료가 너무 깁니다. 실시예 처방과 제조 방법 부분만 남겨 주세요.',invalid_json:'결과 형식을 읽지 못했습니다. 다시 시도하거나 자료를 줄여 보세요.',bad_shape:'결과에 상(phase) 정보가 없어 분해도를 만들 수 없습니다. 전성분이나 자료를 더 넣어 보세요.',cancelled:'중지했습니다.',refused:'Claude가 이 입력을 처리하지 않았습니다. 내용을 바꿔 보세요.',image_rejected:'사진 파일을 읽지 못했습니다. 다른 사진을 골라 주세요.',images_unavailable:'이 화면에서는 사진을 보낼 수 없습니다. 전성분을 텍스트로 넣어 주세요.',session_expired:'다시 로그인한 뒤 시도해 주세요.',empty_completion:'결과가 비어 있습니다. 자료를 줄이거나 바꿔 보세요.'})[c]||'분석 중 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요.';
+}
+const LS_KEY='cosmetic-decomp-library-v1';
+function lsLoad(){try{const a=JSON.parse(localStorage.getItem(LS_KEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return null;}}
+function lsSave(arr){try{localStorage.setItem(LS_KEY,JSON.stringify(arr));return true;}catch(e){return false;}}
+function lsRemove(id){const a=lsLoad();if(!a)return false;return lsSave(a.filter(x=>x&&x.product&&x.product.id!==id));}
+async function saveProduct(p){
+  const body={product:JSON.parse(JSON.stringify(p)),createdAt:p.meta.createdAt};
+  delete body.product.local; delete body.product.session;
+  if(dbApi&&isOwner&&JSON.stringify(body).length<240000){
+    try{await dbApi.collection('library').doc(p.id).set(body);if(!CUSTOM_DB.find(x=>x.id===p.id))CUSTOM_DB.push(p);return 'db';}catch(e){}
+  }
+  const arr=lsLoad();
+  if(arr){arr.push(body);if(lsSave(arr)){p.local=true;CUSTOM_LOCAL.push(p);return 'local';}}
+  p.session=true; CUSTOM_SESSION.push(p); return 'session';
+}
+const SAVED_MSG={db:'완료. 이 페이지에 저장했습니다.',local:'완료. 이 브라우저에 저장했습니다.',session:'완료. 저장 공간을 쓸 수 없어 이 창을 닫으면 사라집니다.'};
+function collectInputs(needSample){
+  const name=fName.value.trim(); if(!name){status('제품명을 넣어 주세요.','err');fName.focus();return null;}
+  const inci=fInci.value.trim(), type=fType.value; let budget=180000;
+  const docs=[...docList.children].map(el=>({label:el.querySelector('.dl').value.trim(),url:el.querySelector('.du').value.trim(),text:el.querySelector('.dt').value.trim()})).filter(d=>d.text||d.label)
+    .map(d=>{const t=d.text.slice(0,Math.min(60000,Math.max(0,budget)));budget-=t.length;return Object.assign(d,{text:t});});
+  const imgs=(needSample&&imgMax)?[...fImg.files].slice(0,imgMax):[];
+  return {name,inci,type,docs,imgs};
+}
+async function finishProduct(raw,inp){
+  if(!raw||typeof raw!=='object'||!Array.isArray(raw.phases)||!raw.phases.length) throw {code:'bad_shape'};
+  const id='u-'+Date.now().toString(36);
+  const p=normalizeProduct(raw,{id,name:inp.name,type:inp.type,inci:inp.inci,docs:inp.docs.map(d=>({label:d.label,url:d.url,chars:d.text.length})),docTexts:inp.docs.map(d=>d.text),images:inp.imgs.length,createdAt:new Date().toISOString()});
+  if(!p.phases.length) throw {code:'bad_shape'};
+  const where=await saveProduct(p);
+  status(SAVED_MSG[where],'ok'); runCtl=null; closeAdd(); setMode('3d'); setProduct(id);
+}
+runBtn.onclick=async()=>{
+  if(!sampleFn) return;
+  const inp=collectInputs(true); if(!inp) return;
+  if(!inp.inci&&!inp.imgs.length&&!inp.docs.some(d=>d.text)){status('전성분, 전성분 사진, 자료 본문 중 하나는 넣어 주세요.','err');return;}
+  const prompt=buildPrompt(inp.name,inp.type,inp.inci,inp.docs,inp.imgs.length,false);
+  runCtl=new AbortController(); runBtn.disabled=true; stopBtn.hidden=false;
+  status('Claude가 자료를 읽고 있습니다. 처음이면 사용 허가 창이 먼저 뜹니다. 보통 30초~2분 걸립니다.');
+  try{
+    const opts={modelTier:'complex',signal:runCtl.signal,onText:({text})=>status('분해도를 작성하는 중… '+text.length.toLocaleString()+'자')};
+    if(inp.imgs.length) opts.images=inp.imgs;
+    await finishProduct(await sampleFn.json(prompt,opts),inp);
+  }catch(e){
+    status(errMsg(e),'err');
+    if(e&&['not_granted','sampling_disabled','not_declared'].includes(e.code)){sampleFn=null;document.getElementById('inpageBox').hidden=true;}
+  }finally{runCtl=null;runBtn.disabled=false;stopBtn.hidden=true;}
+};
+stopBtn.onclick=()=>{if(runCtl)runCtl.abort();};
+// 다른 AI(ChatGPT·다른 Claude 등)로 분석
+document.getElementById('copyPromptBtn').onclick=async()=>{
+  const inp=collectInputs(false); if(!inp) return;
+  if(!inp.inci&&!inp.docs.some(d=>d.text)){status('전성분이나 자료 본문 중 하나는 넣어 주세요. 사진은 상대 AI 채팅에 직접 첨부하면 됩니다.','err');return;}
+  const prompt=buildPrompt(inp.name,inp.type,inp.inci,inp.docs,0,true);
+  try{await navigator.clipboard.writeText(prompt);status('프롬프트를 복사했습니다 ('+prompt.length.toLocaleString()+'자). ChatGPT나 다른 Claude 채팅에 붙여넣고, 받은 답변 전체를 아래 칸에 붙여넣으세요. 입력 칸은 그대로 두세요.','ok');}
+  catch(e){openCopy(prompt,'분석 프롬프트','자동 복사가 막혀 있습니다. 아래 내용을 전체 선택해 복사한 뒤 ChatGPT나 다른 Claude 채팅에 붙여넣으세요.');}
+};
+function parseLoose(t){t=String(t||'').trim();const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(f)t=f[1];const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<=a)throw {code:'invalid_json'};return JSON.parse(t.slice(a,b+1));}
+document.getElementById('importBtn').onclick=async()=>{
+  const inp=collectInputs(false); if(!inp) return;
+  let raw; try{raw=parseLoose(document.getElementById('pasteJson').value);}catch(e){status('붙여넣은 답변에서 JSON을 찾지 못했습니다. AI 답변 전체를 그대로 붙여넣었는지 확인하세요.','err');return;}
+  try{await finishProduct(raw,inp);document.getElementById('pasteJson').value='';}catch(e){status(errMsg(e),'err');}
+};
+// 백업 내보내기·가져오기
+document.getElementById('exportBtn').onclick=()=>{
+  const list=CUSTOM(); if(!list.length){status('내보낼 분석 결과가 없습니다.','err');return;}
+  const data=JSON.stringify({app:'cosmetic-decomp',version:1,exportedAt:new Date().toISOString(),products:list.map(p=>{const c=JSON.parse(JSON.stringify(p));delete c.local;delete c.session;return {product:c};})});
+  openCopy(data,'내 분석 백업 ('+list.length+'개)','"파일로 저장"을 누르거나, 막혀 있으면 전체를 복사해 .json 파일로 저장하세요. 다른 기기나 다른 사이트 주소에서 "가져오기"로 불러올 수 있습니다.','cosmetic-decomp-backup.json');
+};
+document.getElementById('importFileBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try{const d=JSON.parse(await f.text());const list=Array.isArray(d.products)?d.products:[];let n=0;
+    for(const x of list){const p=hydrate(x);if(!p)continue;if(ALL().some(q=>q.id===p.id))p.id='u-'+Date.now().toString(36)+n;await saveProduct(p);n++;}
+    status(n?n+'개를 가져왔습니다.':'가져올 분석 결과가 파일에 없습니다.',n?'ok':'err'); renderTabs();
+  }catch(err){status('백업 파일을 읽지 못했습니다.','err');}
+};
+
+async function initCaps(){
+  const a=lsLoad(); if(a) CUSTOM_LOCAL=a.map(hydrate).filter(Boolean).map(p=>{p.local=true;return p;});
+  const note=document.getElementById('saveNote');
+  note.textContent=a?'결과는 이 브라우저에 저장됩니다. 다른 기기로 옮기려면 아래 백업을 쓰세요.':'이 화면에서는 저장 공간을 쓸 수 없어, 창을 닫으면 결과가 사라집니다. 백업 내보내기로 보관하세요.';
+  if(!window.claude||typeof window.claude.use!=='function') return;
+  const [s,d,u,dl]=await Promise.all(['sample','db','user','downloads'].map(n=>window.claude.use(n).catch(()=>null)));
+  dlApi=dl||null;
+  sampleFn=s||null; dbApi=d||null;
+  try{isOwner=u?!!(await u.isOwner()):false;}catch(e){isOwner=false;}
+  document.getElementById('inpageBox').hidden=!sampleFn;
+  if(sampleFn){try{const lim=await sampleFn.limits();if(lim&&lim.images){imgMax=lim.images.maxCount;document.getElementById('imgWrap').hidden=false;fImg.accept=(lim.images.mediaTypes||[]).join(',')||'image/*';document.getElementById('imgNote').textContent='최대 '+imgMax+'장 (이 페이지에서 바로 분석할 때만 쓰입니다)';}}catch(e){}}
+  if(dbApi&&isOwner) note.textContent='결과는 이 페이지에 저장되어 다음에 열어도 남고, 페이지를 공유받은 사람도 볼 수 있습니다. 넣은 자료 본문은 저장하지 않습니다.';
+  if(dbApi){
+    dbApi.collection('library').onSnapshot(snap=>{
+      CUSTOM_DB=snap.docs.map(x=>hydrate(x.data())).filter(Boolean).sort((a,b)=>String(a.meta&&a.meta.createdAt).localeCompare(String(b.meta&&b.meta.createdAt)));
+      const h=location.hash.slice(1);
+      if(!loadedHash&&h&&CUSTOM_DB.find(x=>x.id===h)){loadedHash=true;setProduct(h);return;}
+      if(cur.custom&&!cur.session&&!cur.local&&!CUSTOM_DB.find(x=>x.id===cur.id)){setProduct('gelcream');return;}
+      renderTabs();
+    },()=>{});
+  }
+  renderTabs();
+}
+initCaps();
+
+/* ═════════════ 루프 ═════════════ */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now; const time=now/1000;
+  if(mode==='3d'&&has3){const r=v3.getBoundingClientRect();if(r.width>0){const pr=renderer.getPixelRatio();if(c3.width!==Math.round(r.width*pr)||c3.height!==Math.round(r.height*pr))renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();layout3d();camApply();renderer.render(scene,camera);labels3d();}}
+  if(mode==='proc'){
+    if(playing){playT+=dt;if(playT>5){playT=0;if(stepIdx<cur.steps.length-1)gotoStep(stepIdx+1);else stopPlay();}}
+    drawVessel(dt,time); drawMicro(dt,time);
+  }
+  requestAnimationFrame(frame);
+}
+if(has3) init3d();
+const start=(location.hash||'').slice(1);
+if(CUSTOM_LOCAL.some(p=>p.id===start))loadedHash=true;
+setProduct(ALL().some(p=>p.id===start)?start:'gelcream');
+window.__app={setProduct,setMode,gotoStep,select,PRODUCTS,normalizeProduct,formOf,get cur(){return cur;},get custom(){return CUSTOM();}};
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
